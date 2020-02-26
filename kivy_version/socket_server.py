@@ -37,6 +37,7 @@ game_list = [CaptionThisGame(game_id)]
 
 # receive command from the client
 def receive_message(client_socket):
+    # print("received a message")
     try:
         message = client_socket.recv(2048)
 
@@ -64,12 +65,12 @@ def remove_socket(client_socket):
 
 # Main function
 while True: 
+    # print("Listening")
     # give this list of sockets for select.select() to monitor
     read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
 
     # Iterate over notified sockets
     for notified_socket in read_sockets:
-
         # If notified socket is a server socket - new connection, accept it
         if notified_socket == server_socket:
             client_socket, client_address = server_socket.accept()
@@ -100,6 +101,7 @@ while True:
                     # start the game when full
                     if current_total_player >= TOTAL_PLAYERS:
                         game_list[game_id].ready = True
+                        game_list[game_id].set_flag('caption')
                         
                 # Add client as player to the game with unique ID
                 game_list[game_id].add_player(clients[client_socket]['id'], username)
@@ -124,7 +126,7 @@ while True:
         # existed socket is sending a message
         else:
             message_command = receive_message(notified_socket)
-
+            # print("received a message")
             # client disconnected, cleanup
             if message_command is False:
                 print(f'Closed connection from {clients[notified_socket]["username"]}')
@@ -136,6 +138,8 @@ while True:
                 # TODO: take care of the hack that use game_list[gameId]
                 if (len(game_list[clients[notified_socket]['gameId']].players) == 0) :
                     # Turn the game into None for now
+                    # TODO: make sure to fix current_total_player and game_id
+                    print(f"Putting {game_list[clients[notified_socket]['gameId']]} to null")
                     game_list[clients[notified_socket]['gameId']] = None
 
                 remove_socket(notified_socket)
@@ -152,15 +156,22 @@ while True:
 
             # client wants to submit a caption text (msg: "c caption text")
             if message_command[0] == "c":
+                # print("Received a caption message")
                 caption_text = message_command[1:]
                 game = game_list[info['gameId']]
                 game.add_caption(info['id'], caption_text)
+                # when all players submitted then proceed to vote 
+                if game.all_captions_submitted():
+                    game.set_flag('vote')
                 
             # client wants to vote a caption (msg: "v player_id")
             elif message_command[0] == "v":
-                player_id = message_command[1:]
+                player_id = message_command.split()[1]
                 game = game_list[info['gameId']]
                 game.vote_caption(player_id)
+                # when all players voted then proceed to final 
+                if game.all_captions_voted():
+                    game.set_flag('final')
 
             # client must call caption_winner from the server in order for data to stay persistent across other clients
             elif message_command[0] == "f":
@@ -170,8 +181,9 @@ while True:
             elif message_command[0] == "r":
                 game.reset()
                 
-            # send back an updated game object
-            notified_socket.send(pickle.dumps(game))
+            # send back an updated game object to all connected clients
+            # notified_socket.send(pickle.dumps(game))
+            send_to_all(info['gameId'], pickle.dumps(game))
 
 
     # handle any socket exceptions just in case

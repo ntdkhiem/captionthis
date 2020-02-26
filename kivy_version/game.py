@@ -7,9 +7,12 @@ class CaptionThisGame:
     def __init__(self, gameId):
         self.players = {}
         # self.players = {
-        #   'socketSession': ['kevin', 0]
+        #   'UniqueID': ['kevin', 0]
         # }
         self.caption_texts = {}
+        # self.captions_texts = {
+        #   'UniqueID': ['caption_text', 0]
+        # }
         self.total_votes = 0
         self.winners = []
         self.image = self.get_image()
@@ -19,8 +22,6 @@ class CaptionThisGame:
         self.flag = 'wait'
 
     def is_ready(self): 
-        if self.ready:
-            self.flag = 'caption'
         return self.ready
 
     # def get_gameId(self):
@@ -31,6 +32,9 @@ class CaptionThisGame:
     def get_image(self):
         return random.choice(os.listdir('images'))
         # return 'image.jpg'
+
+    def set_flag(self, id):
+        self.flag = id
 
     def add_player(self, player_id, player_name):
         # print(f"Adding {player_name} to the game.")
@@ -49,6 +53,7 @@ class CaptionThisGame:
     def vote_caption(self, player_id):
         self.total_votes += 1
         self.caption_texts[player_id][1] += 1
+        # print(f"New vote. Current total: {self.total_votes}")
 
     # if total votes equal total players then assume everyone voted
     def all_captions_voted(self):

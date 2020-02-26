@@ -24,7 +24,7 @@ def connect(ip, port, my_username, error_callback):
         return False
     
     # server expects username when connect therefore send this username
-    client_socket.send(my_username.encode('utf-8'))
+    print(client_socket.send(my_username.encode('utf-8')))
 
     return True
 
@@ -32,7 +32,8 @@ def connect(ip, port, my_username, error_callback):
 # sends a message to the server
 def send(message):
     message = message.encode('utf-8')
-    client_socket.send(message)
+    # print(message)
+    print(client_socket.send(message))
 
 # starts listening function in a thread
 # incoming_message_callback - callback to be called when new message arrives

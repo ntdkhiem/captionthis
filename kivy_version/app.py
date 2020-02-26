@@ -12,7 +12,7 @@ from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 import socket_client
-
+# TODO: cache image locally
 TOTAL_PLAYERS = 2
 
 # The page for connecting to the server
@@ -64,7 +64,6 @@ class ConnectPage(GridLayout):
         info = f"Joining {ip}:{port} as {username}"
         ct_app.wait_page.update_info(info)
         ct_app.screen_manager.current = 'Wait'
-        print(ct_app.screen_manager.current)
         # Connect to the server after switching to Wait page
         Clock.schedule_once(self.connect, 1)
 
@@ -79,10 +78,10 @@ class ConnectPage(GridLayout):
         if not socket_client.connect(ip, port, username, show_error): 
             return 
         
-        print("Start listening from the server...")
-        socket_client.start_listening(incoming_message_handler, show_error)
+        print("Start listening for responses...")
+        socket_client.start_listening(ct_app.incoming_message_handler, show_error)
 
-        info = f"Waiting for 4 more player..."
+        info = f"Connecting..."
         ct_app.wait_page.update_info(info)
 
         # ct.screen_manager.current = 'Wait'
@@ -102,13 +101,6 @@ class WaitPage(GridLayout):
         
         # add text widget to the layout 
         self.add_widget(self.message)
-
-        self.msg = TextInput(multiline=False)
-
-        self.add_widget(self.msg)
-
-        # Clock.schedule_once(self.switch_page, 5)
-        # Clock.schedule_once(self.switch_page, 5)
 
     # Update text widget with this new message
     def update_info(self, message):
@@ -132,54 +124,61 @@ class CaptionPage(GridLayout):
 
         # FIRST ROW - will be for viewing (image, time, number of captions) takes up 95% of the height of the screen 
         view_container = GridLayout(cols=2, height=Window.size[1] * 0.9, size_hint_y=None)
-        # Image to be view takes 80% of the width of view_container
-        # self.image = Label(width=Window.size[0]*0.8, halign="center", valign="middle", text="Image Here...", font_size=50)
-        self.image = Image()
+        # Image widget
+        self.image = Image(source="images/Blank-Nut-Button.jpg")
         view_container.add_widget(self.image)
 
         # A container contains time and captions
-        info_container = GridLayout(cols=1, rows=2)
+        self.info_container = GridLayout(cols=1, rows=2)
         self.submissions = Label(halign="center", valign="middle", font_size=20)
         self.clock = Label(halign="center", valign="middle", text="60 seconds", font_size=20)
-        info_container.add_widget(self.submissions)
-        info_container.add_widget(self.clock)
-        view_container.add_widget(info_container)
+        self.info_container.add_widget(self.submissions)
+        self.info_container.add_widget(self.clock)
+        view_container.add_widget(self.info_container)
         self.add_widget(view_container)
 
         # SECOND ROW
-        # container for sending message
-        submission_container = GridLayout(cols=2, size_hint_y=None)
-        # takes up 80% of the width of submission_container
-        self.caption = TextInput(width=Window.size[0]*0.8, size_hint_x=None, multiline=False, focus=True)
+        self.caption = TextInput(width=Window.size[0]*0.8, size_hint_x=None, multiline=False)
         self.send = Button(text="Send")
         self.send.bind(on_release=self.submit)
+
+        # container for sending message
+        submission_container = GridLayout(cols=2)
         submission_container.add_widget(self.caption)
         submission_container.add_widget(self.send)
         self.add_widget(submission_container)
 
     # TODO: could not update image's source
-    # TODO: can't type in self.caption
     def update_image(self, link):
         print(f"Got {link}")
+        print(f"self.image: {self.image}")
+        print(f"self.image.source: {self.image.source}")
         self.image.source = f"images/{link}"
+        # self.image.norm_image_size
+        print(f"self.image.source: {self.image.source}")
+        # self.image.reload()
 
-    def update_submission_count(self, total_submissions):
-        if not total_submissions:
-            total_submissions = 0
-        self.submissions.text = f"{total_submissions} Caption(s)"
+    def update_submission_count(self, submission_object):
+        print("Updating submission count...")
+        if not submission_object:
+            submission_count = 0
+        else:
+            submission_count = len(submission_object.values())
+        self.submissions.text = f"{submission_count} Caption(s)"
 
     def submit(self, instance):
-        print("Sending the caption to the server...")
+        # print("Sending the caption to the server...")
         caption = self.caption.text
 
         # send to server
-        socket_client.send(caption)
+        socket_client.send(f"c {caption}")
 
         # clear field value
         self.caption.text = ''
 
         # disable the submission container to prevent extra submit
         self.caption.disabled = True
+        self.send.disabled = True
 
 
 class VotePage(GridLayout): 
@@ -187,28 +186,57 @@ class VotePage(GridLayout):
         super().__init__(**kwargs)
 
         self.cols = 2
+        self.captions_dict = {}
+        self.hasOptions = False
 
         # FIRST COLUMN - will contain image and all options to vote
         view_container = GridLayout(cols=1, rows=2, width=Window.size[0] * 0.8, size_hint_x=None)
-        self.image = Label(width=Window.size[0], text="Image Here...")
-        options_container = GridLayout(cols=2, rows=2)
-        options_container.add_widget(Label(text="Option #1"))
-        options_container.add_widget(Label(text="Option #2"))
-        options_container.add_widget(Label(text="Option #3"))
-        options_container.add_widget(Label(text="Option #4"))
+        self.image = Image()
+        self.options_container = GridLayout(cols=2, rows=2)
+        # options_container.add_widget(Label(text="Option #1"))
+        # options_container.add_widget(Label(text="Option #2"))
+        # options_container.add_widget(Label(text="Option #3"))
+        # options_container.add_widget(Label(text="Option #4"))
         
         view_container.add_widget(self.image)
-        view_container.add_widget(options_container)
+        view_container.add_widget(self.options_container)
         self.add_widget(view_container)
         
         
         # SECOND COLUMN - will contain time counter and number of votes
         info_container = GridLayout(cols=1, rows=2)
-        self.submissions = Label(halign="center", valign="middle", text="1 Vote(s)", font_size=20)
+        self.submissions = Label(halign="center", valign="middle", font_size=20)
         self.clock = Label(halign="center", valign="middle", text="30 seconds", font_size=20)
         info_container.add_widget(self.submissions)
         info_container.add_widget(self.clock)
         self.add_widget(info_container)
+
+    def add_options(self, captions_dict):
+        self.captions_dict = captions_dict
+        for player_id, lst in captions_dict.items():
+            btn = Button(text=lst[0])
+            btn.bind(on_release=self.on_click)
+            self.options_container.add_widget(btn)
+        self.hasOptions = True
+
+    def update_image(self, link):
+        pass 
+
+    def update_submission_count(self, votes):
+        self.submissions.text = f"{votes} Vote(s)"
+
+    # TODO: refractor this so that the button will always be unique
+    def on_click(self, instance):
+        print("sending a message")
+        # find the voted caption's player 
+        for player_id, lst in self.captions_dict.items():
+            if instance.text == lst[0]:
+                # send player_id to the server
+                socket_client.send(f"v {player_id}")
+        
+        # TODO: disable all options
+        
+
 
 
 class FinalPage(GridLayout): 
@@ -261,55 +289,106 @@ class CaptionThisApp(App):
         screen_wait.add_widget(self.wait_page)
         self.screen_manager.add_widget(screen_wait)
         
-        # Caption page
+        return self.screen_manager
+        # return CaptionPage()
+        
+    # Caption page
+    def create_caption_page(self):
         self.caption_page = CaptionPage()
         screen_caption = Screen(name='Caption')
         screen_caption.add_widget(self.caption_page)
         self.screen_manager.add_widget(screen_caption)
-        
-        # Vote page
+    
+    # Vote page
+    def create_vote_page(self):
         self.vote_page = VotePage()
         screen_vote = Screen(name='Vote')
         screen_vote.add_widget(self.vote_page)
         self.screen_manager.add_widget(screen_vote)
-        
-        # Final page
+    
+    # Final page
+    def create_final_page(self):
         self.final_page = FinalPage()
         screen_final = Screen(name='Final')
         screen_final.add_widget(self.final_page)
         self.screen_manager.add_widget(screen_final)
-        
-        # Leaderboard page
+    
+    # Leaderboard page
+    def create_leaderboard_page(self):
         self.leaderboard_page = LeaderboardPage()
         screen_lead = Screen(name='Leaderboard')
         screen_lead.add_widget(self.leaderboard_page)
         self.screen_manager.add_widget(screen_lead)
 
-        return self.screen_manager
-        # return CaptionPage()
+        
 
 
-def incoming_message_handler(game_object):
-    # print("Received message from the server")
-    # if the game is not ready then update the game's total players
-    if not game_object.is_ready():
-        info = f"Waiting for {TOTAL_PLAYERS - len(game_object.players)} more player..."
-        # print(info)
-        ct_app.wait_page.update_info(info)
-    # the game is ready
-    else:
-        print("Start the game...")
-        # switch to caption page
-        if game_object.flag == 'caption':
-            if not ct_app.screen_manager.current == 'Caption':
-                ct_app.screen_manager.current = 'Caption'
-            # update image if curren page does not have the image
-            caption_page = ct_app.caption_page
-            if not caption_page.image.source:
+    def incoming_message_handler(self, game_object):
+        # print("Received message from the server")
+        # if the game is not ready then update the game's total players
+        if not game_object.is_ready():
+            info = f"Waiting for {TOTAL_PLAYERS - len(game_object.players)} more player..."
+            # print(info)
+            self.wait_page.update_info(info)
+        # the game is ready
+        else:
+            # print("Start the game...")
+            # switch to caption page
+            if game_object.flag == 'caption':
+
+                # create caption page if not exist already
+                if not self.screen_manager.has_screen('Caption'):
+                    print("creating caption page...")
+                    self.create_caption_page()
+
+                # switch to caption screen if not already
+                if not self.screen_manager.current == 'Caption':
+                    self.screen_manager.current = 'Caption'
+
+                caption_page = self.caption_page
+
+                # update image if curren page does not have the image
+                # TODO: Fix this
+                # if not self.caption_page.image.source:
                 caption_page.update_image(game_object.image)
-            # TODO: update total submission according to the new game object
-            caption_page.update_submission_count(game_object.caption_texts)
 
+                # Update submission count according to the game object
+                caption_page.update_submission_count(game_object.caption_texts)
+            
+            # switch to vote page
+            elif game_object.flag == 'vote':
+                # create vote page if not exist already
+                if not self.screen_manager.has_screen('Vote'):
+                    print("creating vote page...")
+                    self.create_vote_page()
+
+                # switch to vote screen if not already
+                if not self.screen_manager.current == 'Vote':
+                    self.screen_manager.current = 'Vote'
+
+                vote_page = self.vote_page
+
+                # update image if curren page does not have the image
+                vote_page.update_image(game_object.image)
+
+                # add when the page doesn't have option buttons
+                if not vote_page.hasOptions:
+                    # Display captions as options
+                    vote_page.add_options(game_object.caption_texts)
+
+                # Update submission count according to the game object
+                vote_page.update_submission_count(game_object.total_votes)
+
+            # switch to final page
+            elif game_object.flag == 'final':
+                # create final page if not exist already
+                if not self.screen_manager.has_screen('Final'):
+                    print("creating final page...")
+                    self.create_final_page()
+
+                # switch to final screen if not already
+                if not self.screen_manager.current == 'Final':
+                    self.screen_manager.current = 'Final'
 
 # Error callback function, used by sockets client
 # Updates info page with an error message, shows message and schedules exit in 10 seconds

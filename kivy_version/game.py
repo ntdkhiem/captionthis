@@ -15,6 +15,7 @@ class CaptionThisGame:
         # }
         self.total_votes = 0
         self.winners = []
+        self.winning_caption = ''
         self.image = self.get_image()
         self.ready = False
         self.gameId = gameId
@@ -60,21 +61,26 @@ class CaptionThisGame:
         return True if self.total_votes == len(self.players) else False
 
     # Return the player object with the most voted caption text
+    # TODO: fix if there are more than one caption with the same total votes
     def caption_winner(self):
         if not self.winners:
             winners_id = []
             most_votes = 0
+            winning_caption = ''
             for player_id, value in self.caption_texts.items():
                 # Get total votes in [caption, votes]
                 if value[1] > most_votes:
                     winners_id = [player_id]
                     most_votes = value[1]
+                    winning_caption = value[0]
                 elif value[1] == most_votes:
                     winners_id.append(player_id)
             
+            self.winning_caption = winning_caption
             # add bonus points to these winner
             for player in winners_id:
                 self.players[player][1] += 1
+                # add usernames to winners 
                 self.winners.append(self.players[player][0])
 
     def remove_player(self, player_id):
@@ -90,3 +96,4 @@ class CaptionThisGame:
             self.total_votes = 0
             self.image = self.get_image()
             self.winners = []
+            self.set_flag('reset') 

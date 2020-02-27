@@ -110,10 +110,6 @@ class WaitPage(GridLayout):
     def update_text_width(self, *_):
         self.message.text_size = (self.message.width * 0.9, None)
 
-    # TODO: to be delete
-    # def switch_page(self, _):
-    #     ct_app.screen_manager.current = 'Caption'
-
 
 class CaptionPage(GridLayout):
     def __init__(self, **kwargs):
@@ -165,6 +161,10 @@ class CaptionPage(GridLayout):
         else:
             submission_count = len(submission_object.values())
         self.submissions.text = f"{submission_count} Caption(s)"
+
+    def enable_submission_container(self):
+        self.caption.disabled = False
+        self.send.disabled = False
 
     def submit(self, instance):
         # print("Sending the caption to the server...")
@@ -219,6 +219,10 @@ class VotePage(GridLayout):
             self.options_container.add_widget(btn)
         self.hasOptions = True
 
+    def clear_options(self):
+        self.hasOptions = False
+        self.options_container.clear_widgets()
+
     def update_image(self, link):
         pass 
 
@@ -246,11 +250,33 @@ class FinalPage(GridLayout):
         self.rows = 3
 
         self.image = Label(height=Window.size[1] * 0.5, text="Image Here...", size_hint_y=None)
-        self.caption = Label(text="Winning caption here....", size_hint_y=None)
-        self.winner = Label(text="{Player} gets 10 points!")
+        self.caption = Label(size_hint_y=None)
+        self.winner = Label()
         self.add_widget(self.image)
         self.add_widget(self.caption)
         self.add_widget(self.winner)
+
+        # switch to leaderboard page after 5 seconds
+        # print("scheduling switch_to_leaderboard in 5 seconds")
+        # Clock.schedule_once(self.switch_to_leaderboard, 5)
+
+    def update_image(self):
+        pass 
+
+    def update_caption(self, caption):
+        self.caption.text = caption
+
+    def update_winner(self, winners):
+        msg = ', '.join(winners)
+        self.winner.text = f"{msg} get 1 point."
+
+    def switch_to_leaderboard(self, _):
+        # print("Switching to Leadboard Page")
+        # if not ct_app.screen_manager.has_screen('Leaderboard'):
+        # initialize leadboard page
+        ct_app.create_leaderboard_page()
+        # print("switching now...")
+        ct_app.screen_manager.current = 'Leaderboard'
 
 
 class LeaderboardPage(GridLayout):
@@ -260,19 +286,31 @@ class LeaderboardPage(GridLayout):
 
         self.cols = 2
 
-        leaderboard_container = GridLayout(width=Window.size[0] * 0.9, size_hint_x=None, rows=5)
-        leaderboard_container.add_widget(Label(text="Leaderboard", font_size=20))
-        leaderboard_container.add_widget(Label(text="1. Player 1"))
-        leaderboard_container.add_widget(Label(text="2. Player 2"))
-        leaderboard_container.add_widget(Label(text="3. Player 3"))
-        leaderboard_container.add_widget(Label(text="4. Player 4"))
+        self.leaderboard_container = GridLayout(width=Window.size[0] * 0.9, size_hint_x=None, rows=5)
+        self.leaderboard_container.add_widget(Label(text="Leaderboard", font_size=20))
+        self.add_players()
         # leaderboard_container.add_widget(Label(text="5. Player 5"))
-        self.next = Button(text="-->", font_size=40)
-        self.add_widget(leaderboard_container)
+        self.next = Button(text="next game")
+        self.next.bind(on_release=self.on_reset)
+        self.add_widget(self.leaderboard_container)
         self.add_widget(self.next)
 
+    def add_players(self):
+        for id, value in ct_app.game_object.players.items():
+            self.leaderboard_container.add_widget(Label(text=f"{value[0]}               {value[1]} point"))
 
+    def clear_winners(self):
+        self.leaderboard_container.clear_widgets()
+
+    def on_reset(self, instance):
+        socket_client.send("r")
+        
 class CaptionThisApp(App):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.game_object = None
+
     def build(self):
 
         self.screen_manager = ScreenManager()
@@ -316,9 +354,14 @@ class CaptionThisApp(App):
     # Leaderboard page
     def create_leaderboard_page(self):
         self.leaderboard_page = LeaderboardPage()
-        screen_lead = Screen(name='Leaderboard')
-        screen_lead.add_widget(self.leaderboard_page)
-        self.screen_manager.add_widget(screen_lead)
+        # if screen_manager already have Leaderboard screen then reset and added this new object 
+        if self.screen_manager.has_screen('Leaderboard'):
+            self.screen_manager.get_screen('Leaderboard').clear_widgets()
+            self.screen_manager.get_screen('Leaderboard').add_widget(self.leaderboard_page)
+        else:
+            screen_lead = Screen(name='Leaderboard')
+            screen_lead.add_widget(self.leaderboard_page)
+            self.screen_manager.add_widget(screen_lead)
 
         
 
@@ -333,9 +376,18 @@ class CaptionThisApp(App):
         # the game is ready
         else:
             # print("Start the game...")
+            if game_object.flag == 'reset':
+                # enable submission container for Caption Page
+                ct_app.caption_page.enable_submission_container()
+                # clear options in Vote Page
+                ct_app.vote_page.clear_options()
+                # clear winners
+                ct_app.leaderboard_page.clear_winners()
+                # set the flag back to caption to begins the game
+                game_object.set_flag('caption')
+
             # switch to caption page
             if game_object.flag == 'caption':
-
                 # create caption page if not exist already
                 if not self.screen_manager.has_screen('Caption'):
                     print("creating caption page...")
@@ -389,6 +441,19 @@ class CaptionThisApp(App):
                 # switch to final screen if not already
                 if not self.screen_manager.current == 'Final':
                     self.screen_manager.current = 'Final'
+
+                final_page = self.final_page
+
+                # display winning caption
+                final_page.update_caption(game_object.winning_caption)
+
+                # display winners
+                final_page.update_winner(game_object.winners)
+
+                print("Scheduling switch_to_leaderboard in 5 seconds.")
+                Clock.schedule_once(final_page.switch_to_leaderboard, 5)
+
+            self.game_object = game_object
 
 # Error callback function, used by sockets client
 # Updates info page with an error message, shows message and schedules exit in 10 seconds

@@ -7,7 +7,8 @@ from game import CaptionThisGame
 
 TOTAL_PLAYERS = 2
 
-server = "10.0.0.113"
+# server = "10.0.0.113"
+server = "172.16.66.97"
 port = 5000
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -172,6 +173,8 @@ while True:
                 # when all players voted then proceed to final 
                 if game.all_captions_voted():
                     game.set_flag('final')
+                # Calculate winners here
+                game.caption_winner()
 
             # client must call caption_winner from the server in order for data to stay persistent across other clients
             elif message_command[0] == "f":

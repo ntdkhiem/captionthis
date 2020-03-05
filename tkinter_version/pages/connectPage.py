@@ -13,6 +13,18 @@ class ConnectPage(tk.Frame):
 
         lbl_title = tk.Label(master=self, text="Caption This!", font=LARGE_FONT)
         lbl_title.pack(pady=10, padx=10)
+        
+        # get previous details to prefill
+        if os.path.isfile("prev_details.txt"):
+            with open("prev_details.txt","r") as f:
+                data = json.load(f)
+                prev_ip = data["ip"]
+                prev_port = data["port"]
+                prev_username = data["username"]
+        else:
+            prev_ip = ''
+            prev_port = ''
+            prev_username = ''
 
         # container
         fr_info = tk.Frame(master=self)
@@ -21,17 +33,17 @@ class ConnectPage(tk.Frame):
         fr_info.columnconfigure([0,1], minsize=80, weight=1)
 
         lbl_ip = tk.Label(master=fr_info, text="Ip Address: ")
-        self.ent_ip = tk.Entry(master=fr_info, width=150)
+        self.ent_ip = tk.Entry(master=fr_info, text=prev_ip, width=150)
         lbl_ip.grid(row=0, column=0, sticky="e", padx=10)
         self.ent_ip.grid(row=0, column=1, sticky="w", padx=10)
 
         lbl_port = tk.Label(master=fr_info, text="Port: ")
-        self.ent_port = tk.Entry(master=fr_info, width=150)
+        self.ent_port = tk.Entry(master=fr_info, text=prev_port, width=150)
         lbl_port.grid(row=1, column=0, sticky="e", padx=10)
         self.ent_port.grid(row=1, column=1, sticky="w", padx=10)
 
         lbl_username = tk.Label(master=fr_info, text="Username: ")
-        self.ent_username = tk.Entry(master=fr_info, width=150)
+        self.ent_username = tk.Entry(master=fr_info, text=prev_username, width=150)
         lbl_username.grid(row=2, column=0, sticky="e", padx=10)
         self.ent_username.grid(row=2, column=1, sticky="w", padx=10)
 
@@ -52,6 +64,5 @@ class ConnectPage(tk.Frame):
         
         with open("prev_details.txt", "w") as f:
             json.dump(payload, f)
-            f.close()
         
         self.controller.connect(payload)

@@ -1,3 +1,4 @@
+import os
 import json
 import tkinter as tk 
 
@@ -33,17 +34,20 @@ class ConnectPage(tk.Frame):
         fr_info.columnconfigure([0,1], minsize=80, weight=1)
 
         lbl_ip = tk.Label(master=fr_info, text="Ip Address: ")
-        self.ent_ip = tk.Entry(master=fr_info, text=prev_ip, width=150)
+        self.ent_ip = tk.Entry(master=fr_info, width=150)
+        self.ent_ip.insert(tk.END, prev_ip)
         lbl_ip.grid(row=0, column=0, sticky="e", padx=10)
         self.ent_ip.grid(row=0, column=1, sticky="w", padx=10)
 
         lbl_port = tk.Label(master=fr_info, text="Port: ")
         self.ent_port = tk.Entry(master=fr_info, text=prev_port, width=150)
+        self.ent_port.insert(tk.END, prev_port)
         lbl_port.grid(row=1, column=0, sticky="e", padx=10)
         self.ent_port.grid(row=1, column=1, sticky="w", padx=10)
 
         lbl_username = tk.Label(master=fr_info, text="Username: ")
         self.ent_username = tk.Entry(master=fr_info, text=prev_username, width=150)
+        self.ent_username.insert(tk.END, prev_username)
         lbl_username.grid(row=2, column=0, sticky="e", padx=10)
         self.ent_username.grid(row=2, column=1, sticky="w", padx=10)
 

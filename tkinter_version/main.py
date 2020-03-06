@@ -28,10 +28,11 @@ class CaptionThis(tk.Tk):
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
-        frame = self.frames[page_name]
-        frame.tkraise()
+        if self.current_frame != page_name:
+            frame = self.frames[page_name]
+            frame.tkraise()
 
-        self.current_frame = page_name
+            self.current_frame = page_name
 
     def connect(self, payload):
         '''Connect to the server then start to listen'''
@@ -56,9 +57,7 @@ class CaptionThis(tk.Tk):
             self.frames["WaitPage"].update_info(info)
         else:
             if game.get_flag() == "caption":
-                if self.current_frame != "CaptionPage":
-                    self.show_frame("CaptionPage")
-                    self.current_frame = "CaptionPage"
+                self.show_frame("CaptionPage")
 
                 caption_page = self.frames["CaptionPage"]
 
@@ -66,8 +65,31 @@ class CaptionThis(tk.Tk):
                     caption_page.create_image(game.get_image())
 
                 caption_page.update_submission_count(game.get_caption_submissions())
-            else:
-                pass
+            
+            elif game.get_flag() == "vote":
+                self.show_frame("VotePage")
+                
+                vote_page = self.frames["VotePage"]
+                
+                if not vote_page.has_image():
+                    vote_page.create_image(game.get_image())
+                    
+                if not vote_page.has_options():
+                    vote_page.create_options(game.get_captions())
+                    
+                vote_page.update_submission_count(game.get_total_votes())
+                
+            elif game.get_flag() == "final":
+                self.show_frame("FinalPage")
+                
+                final_page = self.frames["FinalPage"]
+                
+                final_page.display_caption(game.get_winning_caption())
+                
+                final_page.display_winners(game.get_winners())
+                
+#               switch to leaderboard page in 5 seconds 
+                self.after(5 * 1000, lambda: self.show_frame("LeaderboardPage"))
 
     def error_handler(self, message):
         '''display error message to wait page and exit'''

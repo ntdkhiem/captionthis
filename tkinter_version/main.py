@@ -37,18 +37,21 @@ class CaptionThis(tk.Tk):
     def connect(self, payload):
         '''Connect to the server then start to listen'''
         # # redirect client to wait page
-        # info = "Joining {}:{} as {}".format(*payload.values())
-        # self.frames["WaitPage"].update_info(info)
-        # self.show_frame("WaitPage")
+        info = "Joining {}:{} as {}".format(*payload.values())
+        self.frames["WaitPage"].update_info(info)
+        self.show_frame("WaitPage")
 
-        # # connect to the server
-        # if not socket_client.connect(**payload, error_callback=self.error_handler):
-        #     return
+        # connect to the server
+        if not socket_client.connect(**payload, error_callback=self.error_handler):
+            return
 
-        # socket_client.start_listen(self.server_message_handler, self.error_handler)
+        socket_client.start_listen(self.server_message_handler, self.error_handler)
 
         self.frames["WaitPage"].update_info("Connecting...")
-        self.show_frame("WaitPage")
+
+    def send(self, msg, cmd):
+        if cmd == "caption":
+            socket_client.send(f"c {msg}")
 
     def server_message_handler(self, game):
         '''Handle responses from the server'''
@@ -88,7 +91,7 @@ class CaptionThis(tk.Tk):
                 
                 final_page.display_winners(game.get_winners())
                 
-#               switch to leaderboard page in 5 seconds 
+                # switch to leaderboard page in 5 seconds 
                 self.after(5 * 1000, lambda: self.show_frame("LeaderboardPage"))
 
     def error_handler(self, message):

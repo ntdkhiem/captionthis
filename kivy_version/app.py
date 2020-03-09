@@ -8,7 +8,7 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from kivy.uix.image import Image
+from kivy.uix.image import Image, AsyncImage
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 import socket_client
@@ -84,7 +84,8 @@ class ConnectPage(GridLayout):
         info = f"Connecting..."
         ct_app.wait_page.update_info(info)
 
-        # ct.screen_manager.current = 'Wait'
+        # ct_app.create_caption_page()
+        # ct.screen_manager.current = 'Caption'
     
 
 class WaitPage(GridLayout):
@@ -121,11 +122,14 @@ class CaptionPage(GridLayout):
         # FIRST ROW - will be for viewing (image, time, number of captions) takes up 95% of the height of the screen 
         view_container = GridLayout(cols=2, height=Window.size[1] * 0.9, size_hint_y=None)
         # Image widget
-        self.image = Image(source="images/Blank-Nut-Button.jpg")
+        self.image = Image(source="images\\Blank-Nut-Button.jpg", size_hint_x=None, size_hint_y=None, width="500", height="500")
+        print("adding image...")
         view_container.add_widget(self.image)
+        # Clock.schedule_once(self.update_image, 5)
+        # self.add_widget(self.image)
 
         # A container contains time and captions
-        self.info_container = GridLayout(cols=1, rows=2)
+        self.info_container = GridLayout(rows=2)
         self.submissions = Label(halign="center", valign="middle", font_size=20)
         self.clock = Label(halign="center", valign="middle", text="60 seconds", font_size=20)
         self.info_container.add_widget(self.submissions)
@@ -147,11 +151,12 @@ class CaptionPage(GridLayout):
     # TODO: could not update image's source
     def update_image(self, link):
         print(f"Got {link}")
-        print(f"self.image: {self.image}")
-        print(f"self.image.source: {self.image.source}")
-        self.image.source = f"images/{link}"
+        # print(f"self.image: {self.image}")
+        # print(f"self.image.source: {self.image.source}")
+        self.image = Image(source=f"images/{link}")
+        # self.view_container.add_widget(AsyncImage(source="https://i.ytimg.com/vi/MPV2METPeJU/maxresdefault.jpg", ))
         # self.image.norm_image_size
-        print(f"self.image.source: {self.image.source}")
+        # print(f"self.image.source: {self.image.source}")
         # self.image.reload()
 
     def update_submission_count(self, submission_object):
@@ -327,12 +332,13 @@ class CaptionThisApp(App):
         screen_wait.add_widget(self.wait_page)
         self.screen_manager.add_widget(screen_wait)
         
-        return self.screen_manager
-        # return CaptionPage()
+        # return self.screen_manager
+        return ConnectPage()
         
     # Caption page
     def create_caption_page(self):
         self.caption_page = CaptionPage()
+        # print(f"caption_page image: {self.caption_page.image.source}")
         screen_caption = Screen(name='Caption')
         screen_caption.add_widget(self.caption_page)
         self.screen_manager.add_widget(screen_caption)

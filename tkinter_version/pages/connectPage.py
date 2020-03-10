@@ -29,7 +29,7 @@ class ConnectPage(tk.Frame):
 
         # container
         fr_info = tk.Frame(master=self)
-        fr_info.pack(fill="x")
+        fr_info.pack(fill="both")
         fr_info.rowconfigure([0,1,2,3], minsize=50, weight=1)
         fr_info.columnconfigure([0,1], minsize=80, weight=1)
 

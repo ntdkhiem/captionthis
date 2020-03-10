@@ -2,6 +2,8 @@ import tkinter as tk
 import pages
 import socket_client
 
+# TODO: self.image, self.options here 
+
 class CaptionThis(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -24,7 +26,7 @@ class CaptionThis(tk.Tk):
             # put all of the pages in the same location
             frame.grid(row=0, column=0, sticky="nsew")
         
-        self.show_frame("CaptionPage")
+        self.show_frame("VotePage")
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
@@ -49,7 +51,7 @@ class CaptionThis(tk.Tk):
 
         self.frames["WaitPage"].update_info("Connecting...")
 
-    def send(self, msg, cmd):
+    def send(self, cmd, msg):
         if cmd == "caption":
             socket_client.send(f"c {msg}")
 

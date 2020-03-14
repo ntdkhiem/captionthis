@@ -1,4 +1,5 @@
 import tkinter as tk 
+from utils.fonts import LARGE_FONT
 
 
 class VotePage(tk.Frame):
@@ -11,34 +12,60 @@ class VotePage(tk.Frame):
 
         display_container = tk.Frame(master=self)
         display_container.pack(fill="both", expand=True, side="top")
-        display_container.rowconfigure(0, minsize=100, weight=1)
-        display_container.columnconfigure(0, minsize=200, weight=1)
+        display_container.rowconfigure([0,1], minsize=50, weight=1)
+        display_container.columnconfigure(0, weight=1)
 
         choice_container = tk.Frame(master=display_container)
         choice_container.grid(row=0, column=0, sticky="nsew")
-        choice_container.rowconfigure([0,1], minsize=50, weight=1)
-        choice_container.columnconfigure(0, weight=1)
+        choice_container.rowconfigure(0, minsize=50, weight=1)
+        choice_container.columnconfigure(0, minsize=70, weight=1)
 
         self.image = tk.Label(master=choice_container, image=None, text="Image here...")
         self.image.grid(row=0, column=0, sticky="nsew")
 
-        self.options_container = tk.Frame(master=choice_container)
+        info_container = tk.Frame(master=choice_container)
+        info_container.grid(row=0, column=1, sticky="nsew")
+        info_container.rowconfigure([0,1], weight=1)
+
+        self.submitted_votes = tk.Label(master=info_container, text="0 vote", font=LARGE_FONT)
+        self.submitted_votes.grid(row=0, column=0, sticky="nsew", padx=10)
+
+        self.countdown = tk.Label(master=info_container, text="60 seconds", font=LARGE_FONT)
+        self.countdown.grid(row=1, column=0, sticky="nsew", padx=10)
+
+        self.options_container = tk.Frame(master=display_container)
         self.options_container.grid(row=1, column=0, sticky="nsew")
         self.options_container.rowconfigure([0,1], weight=1)
         self.options_container.columnconfigure([0,1], weight=1)
 
-        opt_1 = tk.Button(master=self.options_container, text="1. abc", command=lambda: self.vote("1"))
-        opt_1.grid(row=0, column=0, sticky="nsew")
-        opt_2 = tk.Button(master=self.options_container, text="2. abc", command=lambda: self.vote("2"))
-        opt_2.grid(row=0, column=1, sticky="nsew")
-        opt_3 = tk.Button(master=self.options_container, text="3. abc", command=lambda: self.vote("3"))
-        opt_3.grid(row=1, column=0, sticky="nsew")
-        opt_4 = tk.Button(master=self.options_container, text="4. abc", command=lambda: self.vote("4"))
-        opt_4.grid(row=1, column=1, sticky="nsew")
+    def has_image(self):
+        return self.image["image"]
+
+    def upload_image(self, photo):
+        self.image.configure(image=photo)
+        self.image.image = photo
+
+    def update_submission_count(self, total_votes):
+        self.submitted_votes.configure(text=f"{total_votes} votes")
+
+    def add_options(self, captions: dict) -> None:
+        if not self.has_options:
+            for i, (player_id, value) in enumerate(captions.items()):
+                btn = tk.Button(master=self.options_container, text=value[0], command=lambda: self.vote(player_id))
+                btn.grid(row=0 if i <= 1 else i//i, column=i % 2, sticky="nsew")
+
+        self.has_options = True
 
     def vote(self, player_id):
-        print("Player id >>", player_id)
 
-        # controller.send("vote", player_id)
+        self.controller.send("vote", player_id)
 
         # disable all options
+        for child in self.options_container.winfo_children():
+            child.configure(state="disabled")
+
+    def reset(self):
+        self.has_options = False
+
+        for child in self.options_container.winfo_children():
+            child.destroy()

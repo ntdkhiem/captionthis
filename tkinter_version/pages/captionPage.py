@@ -1,6 +1,5 @@
 import tkinter as tk
-from PIL import Image, ImageTk
-from utils.fonts import *
+from utils.fonts import LARGE_FONT
 
 
 class CaptionPage(tk.Frame):
@@ -47,9 +46,7 @@ class CaptionPage(tk.Frame):
     def has_image(self):
         return self.image["image"]
 
-    def create_image(self, source):
-        image = Image.open(f"images\\{source}")
-        photo = ImageTk.PhotoImage(image)
+    def upload_image(self, photo):
         self.image.configure(image=photo)
         self.image.image = photo
 
@@ -59,8 +56,14 @@ class CaptionPage(tk.Frame):
     def submit(self):
         caption = self.ent_submit.get()
 
-        # controller.send("caption", caption)
+        self.controller.send("caption", caption)
 
         self.ent_submit.delete(0, tk.END)
         self.ent_submit.configure(state="disabled")
         self.btn_submit.configure(state="disabled")
+
+    def reset(self):
+        self.ent_submit.configure(state="enabled")
+        self.btn_submit.configure(state="enabled")
+        self.submissions.configure(text="0 caption")
+        self.count_down.configure(text="60 seconds")

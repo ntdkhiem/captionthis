@@ -70,3 +70,6 @@ class ConnectPage(tk.Frame):
             json.dump(payload, f)
         
         self.controller.connect(payload)
+
+    def reset(self):
+        return

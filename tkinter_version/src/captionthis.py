@@ -1,8 +1,8 @@
 import tkinter as tk 
 import pages
-import socket_client
+from src import socket_client
+from PIL import Image, ImageTk
 
-# TODO: self.image, self.options here 
 
 class CaptionThis(tk.Tk):
 
@@ -10,6 +10,7 @@ class CaptionThis(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.current_frame = ''
+        self.current_image = None
 
         # where I will stack and switch frames
         container = tk.Frame(self)
@@ -26,7 +27,7 @@ class CaptionThis(tk.Tk):
             # put all of the pages in the same location
             frame.grid(row=0, column=0, sticky="nsew")
         
-        self.show_frame("VotePage")
+        self.show_frame("ConnectPage")
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
@@ -52,8 +53,13 @@ class CaptionThis(tk.Tk):
         self.frames["WaitPage"].update_info("Connecting...")
 
     def send(self, cmd, msg):
+
         if cmd == "caption":
             socket_client.send(f"c {msg}")
+        elif cmd == "vote":
+            socket_client.send(f"v {msg}")
+        elif cmd == "reset":
+            socket_client.send(f"r")
 
     def server_message_handler(self, game):
         '''Handle responses from the server'''
@@ -61,13 +67,16 @@ class CaptionThis(tk.Tk):
             info = f"Waiting for {game.players_left()} more players..."
             self.frames["WaitPage"].update_info(info)
         else:
+            if game.get_flag() == "reset":
+                self.reset()
+
             if game.get_flag() == "caption":
                 self.show_frame("CaptionPage")
 
                 caption_page = self.frames["CaptionPage"]
 
                 if not caption_page.has_image():
-                    caption_page.create_image(game.get_image())
+                    caption_page.upload_image(self.create_image(game.get_image()))
 
                 caption_page.update_submission_count(game.get_caption_submissions())
             
@@ -77,7 +86,7 @@ class CaptionThis(tk.Tk):
                 vote_page = self.frames["VotePage"]
                 
                 if not vote_page.has_image():
-                    vote_page.create_image(game.get_image())
+                    vote_page.upload_image(self.create_image(game.get_image()))
                     
                 if not vote_page.has_options():
                     vote_page.create_options(game.get_captions())
@@ -89,21 +98,30 @@ class CaptionThis(tk.Tk):
                 
                 final_page = self.frames["FinalPage"]
                 
-                final_page.display_caption(game.get_winning_caption())
+                final_page.display_caption(game.get_win_captions())
                 
                 final_page.display_winners(game.get_winners())
                 
                 # switch to leaderboard page in 5 seconds 
-                self.after(5 * 1000, lambda: self.show_frame("LeaderboardPage"))
+                self.after(5 * 1000, lambda: self.switch_to_leaderboard(game))
+    
+    def switch_to_leaderboard(self, game):
+        self.frames["LeaderboardPage"].add_players(game.players)
+        self.show_frame("LeaderboardPage")
+
+    def create_image(self, source):
+        if not self.current_image:
+            image = Image.open(f"images\\{source}")
+            photo = ImageTk.PhotoImage(image)
+            self.current_image = photo
+        return self.current_image
+
+    def reset(self):
+        for frame in self.frames.values():
+            frame.reset()
 
     def error_handler(self, message):
         '''display error message to wait page and exit'''
         self.frames["WaitPage"].update_info(message)
         self.show_frame("WaitPage")
         self.after(10 * 1000, self.quit)
-        
-
-if __name__ == "__main__":
-    app = CaptionThis()
-    app.geometry("1280x720")
-    app.mainloop()

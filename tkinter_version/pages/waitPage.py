@@ -15,3 +15,6 @@ class WaitPage(tk.Frame):
     def update_info(self, text):
         '''update message to display on the page'''
         self.lbl_info["text"] = text
+    
+    def reset(self):
+        return

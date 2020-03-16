@@ -39,18 +39,17 @@ class CaptionThis(tk.Tk):
 
     def connect(self, payload):
         '''Connect to the server then start to listen'''
-        # # redirect client to wait page
-        info = "Joining {}:{} as {}".format(*payload.values())
-        self.frames["WaitPage"].update_info(info)
-        self.show_frame("WaitPage")
 
         # connect to the server
         if not socket_client.connect(**payload, error_callback=self.error_handler):
             return
 
         socket_client.start_listen(self.server_message_handler, self.error_handler)
-
-        self.frames["WaitPage"].update_info("Connecting...")
+        
+        # redirect client to wait page
+        info = "Joining {}:{} as {}".format(*payload.values())
+        self.frames["WaitPage"].update_info(info)
+        self.show_frame("WaitPage")
 
     def send(self, cmd, msg):
 
@@ -64,7 +63,7 @@ class CaptionThis(tk.Tk):
     def server_message_handler(self, game):
         '''Handle responses from the server'''
         if not game.is_ready():
-            info = f"Waiting for {game.players_left()} more players..."
+            info = f"Waiting for {game.get_players_left()} more players..."
             self.frames["WaitPage"].update_info(info)
         else:
             if game.get_flag() == "reset":
@@ -124,4 +123,5 @@ class CaptionThis(tk.Tk):
         '''display error message to wait page and exit'''
         self.frames["WaitPage"].update_info(message)
         self.show_frame("WaitPage")
+        # quit after 10 seconds
         self.after(10 * 1000, self.quit)

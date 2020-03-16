@@ -17,6 +17,13 @@ class CaptionThisGame:
     def is_ready(self): 
         return self.ready 
 
+    def start_game(self):
+        self.ready = True
+        self.set_flag("caption")
+
+    def get_gameId(self):
+        return self.gameId
+
     def get_image(self):
         return self.image
 
@@ -30,7 +37,7 @@ class CaptionThisGame:
         self.flag = flag 
     
     def get_players_left(self): 
-        return self.get_players_ingame() - self.total_players 
+        return self.total_players - self.get_players_ingame()
     
     def get_players_ingame(self): 
         return len(self.players) 
@@ -40,12 +47,15 @@ class CaptionThisGame:
     
     def get_total_captions(self): 
         return len(self.captions)
+
+    def get_submitted_captions(self):
+        return self.captions
     
     def add_caption(self, playerId, caption): 
         self.captions[playerId] = [caption, 0] 
     
     def all_players_submitted(self): 
-        return True if len(self.caption_texts) == self.get_players_ingame() else False 
+        return True if len(self.captions) == self.get_players_ingame() else False 
     
     def get_votes(self): 
         return self.total_votes 
@@ -90,7 +100,10 @@ class CaptionThisGame:
         
         if self.captions.get(player_id):
             del self.captions[player_id]
-    
+
+    def is_playable(self):
+        return True if self.get_players_ingame() > 1 else False
+
     def reset(self):
         if self.winners:
             self.captions = {}

@@ -24,6 +24,7 @@ def start_listen(incoming_message_callback, error_callback):
     Thread(target=listen, args=(incoming_message_callback, error_callback), daemon=True).start()
 
 def listen(incoming_message_callback, error_callback):
+    global client_socket
     while True:
         try:
             # server will send game object
@@ -31,4 +32,4 @@ def listen(incoming_message_callback, error_callback):
             game = pickle.loads(res)
             incoming_message_callback(game)
         except Exception as e:
-            error_callback(f"Reading Error: {str(e)}")
+            error_callback(f"Reading Error from listen: {str(e)}")

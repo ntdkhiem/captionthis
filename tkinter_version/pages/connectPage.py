@@ -58,7 +58,7 @@ class ConnectPage(tk.Frame):
         '''save user's info into a file then call controller to connect to the server'''
         payload = {
             "ip": self.ent_ip.get(),
-            "port": self.ent_port.get(),
+            "port": int(self.ent_port.get().strip()),
             "username": self.ent_username.get()
         }
 

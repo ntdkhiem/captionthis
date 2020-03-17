@@ -37,7 +37,6 @@ def send(message):
 # incoming_message_callback - callback to be called when new message arrives
 # error_callback - callback to be called on error
 def start_listening(incoming_message_callback, error_callback):
-    print("start a new thread")
     Thread(target=listen, args=(incoming_message_callback, error_callback), daemon=True).start()
 
 # listen for incoming messages
@@ -46,12 +45,12 @@ def listen(incoming_message_callback, error_callback):
         try:
             # assuming the server will always send back game object
             message = client_socket.recv(4096)
-            print("Received a message")
+            # print(message)
             game = pickle.loads(message)
 
             # return the game object to whatever it got called from
             incoming_message_callback(game)
 
-        # TODO: No module named 'game'
+        # TODO: 'bool' object is not callable
         except Exception as e:
             error_callback(f'Reading error from listen: {str(e)}')

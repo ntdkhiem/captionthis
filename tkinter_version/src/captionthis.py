@@ -60,52 +60,62 @@ class CaptionThis(tk.Tk):
         elif cmd == "reset":
             socket_client.send(f"r")
 
-    def server_message_handler(self, game):
+    def server_message_handler(self, game: dict):
         '''Handle responses from the server'''
-        if not game.is_ready():
-            info = f"Waiting for {game.get_players_left()} more players..."
+        if not game["ready"]:
+            info = f"Waiting for {game['game']['total_players'] - len(game['game']['players'])} more players..."
             self.frames["WaitPage"].update_info(info)
         else:
-            if game.get_flag() == "reset":
+            
+            flag = game["flag"]
+
+            if flag == "quit":
+                print("Quitting the game.")
+                self.error_handler("The game will hereby suspend since there is not enough player.")
+
+            if flag == "reset":
                 self.reset()
 
-            if game.get_flag() == "caption":
+            if flag == "caption":
                 self.show_frame("CaptionPage")
 
                 caption_page = self.frames["CaptionPage"]
 
                 if not caption_page.has_image():
-                    caption_page.upload_image(self.create_image(game.get_image()))
+                    caption_page.upload_image(self.create_image(game["game"]["image"]))
 
-                caption_page.update_submission_count(game.get_caption_submissions())
+                caption_page.update_submission_count(len(game["game"]["captions"]))
             
-            elif game.get_flag() == "vote":
+            elif flag == "vote":
                 self.show_frame("VotePage")
                 
                 vote_page = self.frames["VotePage"]
                 
                 if not vote_page.has_image():
-                    vote_page.upload_image(self.create_image(game.get_image()))
+                    vote_page.upload_image(self.create_image(game["game"]["image"]))
                     
-                if not vote_page.has_options():
-                    vote_page.create_options(game.get_captions())
+                if not vote_page.has_options:
+                    vote_page.create_options(game["game"]["captions"])
                     
-                vote_page.update_submission_count(game.get_total_votes())
+                vote_page.update_submission_count(game["game"]["votes"])
                 
-            elif game.get_flag() == "final":
+            elif flag == "final":
                 self.show_frame("FinalPage")
                 
                 final_page = self.frames["FinalPage"]
                 
-                final_page.display_caption(game.get_win_captions())
+                if not final_page.has_image():
+                    final_page.upload_image(self.create_image(game["game"]["image"]))
+
+                final_page.display_caption(game["game"]["win_captions"])
                 
-                final_page.display_winners(game.get_winners())
+                final_page.display_winners(game["game"]["winners"])
                 
                 # switch to leaderboard page in 5 seconds 
                 self.after(5 * 1000, lambda: self.switch_to_leaderboard(game))
     
     def switch_to_leaderboard(self, game):
-        self.frames["LeaderboardPage"].add_players(game.players)
+        self.frames["LeaderboardPage"].add_players(game["game"]["players"])
         self.show_frame("LeaderboardPage")
 
     def create_image(self, source):
@@ -118,6 +128,8 @@ class CaptionThis(tk.Tk):
     def reset(self):
         for frame in self.frames.values():
             frame.reset()
+        
+        self.show_frame("CaptionPage")
 
     def error_handler(self, message):
         '''display error message to wait page and exit'''

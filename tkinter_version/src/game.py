@@ -28,7 +28,7 @@ class CaptionThisGame:
         return self.image
 
     def set_image(self):
-        return random.choice(random._os.listdir("images"))
+        return random.choice(random._os.listdir("../images"))
 
     def get_flag(self): 
         return self.flag 
@@ -36,26 +36,17 @@ class CaptionThisGame:
     def set_flag(self, flag): 
         self.flag = flag 
     
-    def get_players_left(self): 
-        return self.total_players - self.get_players_ingame()
-    
-    def get_players_ingame(self): 
-        return len(self.players) 
-    
     def add_player(self, player_id, player_name): 
         self.players[player_id] = [player_name, 0] 
     
-    def get_total_captions(self): 
-        return len(self.captions)
-
-    def get_submitted_captions(self):
+    def get_captions(self):
         return self.captions
-    
+
     def add_caption(self, playerId, caption): 
         self.captions[playerId] = [caption, 0] 
     
     def all_players_submitted(self): 
-        return True if len(self.captions) == self.get_players_ingame() else False 
+        return True if len(self.captions) == len(self.players) else False 
     
     def get_votes(self): 
         return self.total_votes 
@@ -65,8 +56,9 @@ class CaptionThisGame:
         self.captions[voted_player_id][1] += 1 
     
     def all_players_voted(self): 
-        return True if self.get_votes() == self.get_players_ingame() else False 
+        return True if self.get_votes() == len(self.players) else False 
     
+    # TODO: only one winner that got display on the client's side
     def calculate_winners(self): 
         if not self.winners: 
             most_votes = 0 
@@ -102,7 +94,7 @@ class CaptionThisGame:
             del self.captions[player_id]
 
     def is_playable(self):
-        return True if self.get_players_ingame() > 1 else False
+        return True if len(self.players) > 1 else False
 
     def reset(self):
         if self.winners:
@@ -111,3 +103,19 @@ class CaptionThisGame:
             self.image = self.set_image()
             self.winners = []
             self.set_flag("reset")
+
+    def to_json(self):
+        return {
+            "game_id": self.get_gameId(),
+            "flag": self.get_flag(),
+            "ready": self.is_ready(),
+            "game": {
+                "total_players": self.total_players,
+                "players": self.players,
+                "image": self.get_image(),
+                "captions": self.get_captions(),
+                "votes": self.get_votes(),
+                "winners": self.get_winners(),
+                "win_captions": self.get_win_captions()
+            },
+        }

@@ -1,5 +1,5 @@
 from src.captionthis import CaptionThis
 
 app = CaptionThis()
-app.geometry("1280x720")
+app.geometry("600x600")
 app.mainloop()

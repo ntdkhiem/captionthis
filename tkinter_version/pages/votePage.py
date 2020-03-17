@@ -48,7 +48,7 @@ class VotePage(tk.Frame):
     def update_submission_count(self, total_votes):
         self.submitted_votes.configure(text=f"{total_votes} votes")
 
-    def add_options(self, captions: dict) -> None:
+    def create_options(self, captions: dict) -> None:
         if not self.has_options:
             for i, (player_id, value) in enumerate(captions.items()):
                 btn = tk.Button(master=self.options_container, text=value[0], command=lambda: self.vote(player_id))

@@ -17,7 +17,7 @@ class LeaderboardPage(tk.Frame):
         self.players_container.rowconfigure(0, weight=1)
         self.players_container.columnconfigure(0, weight=1)
 
-        btn_next = tk.Button(master=display_container, text="Next", font=LARGE_FONT)
+        btn_next = tk.Button(master=display_container, text="Next", font=LARGE_FONT, command=self.on_reset)
         btn_next.grid(row=1, column=0, sticky="nsew")
 
         self.after(5 * 1000, self.reset)

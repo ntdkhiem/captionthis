@@ -1,10 +1,10 @@
 import socket, pickle, uuid
 from _thread import start_new_thread
-from src.game import CaptionThisGame
+from game import CaptionThisGame
 
 SERVER = "10.0.0.113"
 PORT = 5000
-TOTAL_PLAYERS = 3
+TOTAL_PLAYERS = 2
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -34,15 +34,22 @@ def receive_message(client_socket):
     except:
         return False
 
-def send_to_all_ingame(game_id, msg):
+def send_to_all_ingame(game_id, msg, except_socket=None):
     for client_socket, data in connect_clients.items():
-        if data["gameId"] == game_id:
+        if data["gameId"] == game_id and client_socket != except_socket:
             client_socket.send(msg)
 
 def disconnect_all_ingame(game_id):
+    remove_clients = []
+
     for client_socket, data in connect_clients.items():
         if data["gameId"] == game_id:
-            remove_socket(client_socket)
+            remove_clients.append(client_socket)
+            client_socket.close()
+
+    # to avoid dictionary changed size
+    for client in remove_clients:
+        remove_socket(client)
 
 def remove_socket(client_socket):
     if connect_clients.get(client_socket) != None:
@@ -59,26 +66,30 @@ def client_handler(conn):
             msg_cmd = receive_message(conn)
 
             if not msg_cmd:    
-                game.remove_player(player["id"])
-                
-                # if there is new game then remove this game if not playable
-                if game.get_gameId() != game_id:
-                    if not game.is_playable():
-                        print(f"Removing game {player['gameId']}")
-                        disconnect_all_ingame(player["gameId"])
-                        del game_list[player["gameId"]]
-                else:
-                    # client disconnected while at the wait screen therefore add new connection to this game
-                    current_total_player -= 1
-                
-                remove_socket(conn)
+                if game_list.get(game.get_gameId()):
+                    game.remove_player(player["id"])
+                    
+                    if game.get_gameId() == game_id:
+                        current_total_player -= 1
+                    else:
+                        if not game.is_playable():
+                            print(f"Removing game {player['gameId']}")
+
+                            game.set_flag("quit")
+                            send_to_all_ingame(game.get_gameId(), pickle.dumps(game.to_json()), except_socket=conn)
+
+                            disconnect_all_ingame(game.get_gameId())
+                            del game_list[game.get_gameId()]
+
+                    remove_socket(conn)
 
                 break
             
 
             if msg_cmd[0] == "c":
                 cap_text = msg_cmd[1:]
-                print("adding caption")
+                if game.get_flag() == "reset":
+                    game.set_flag("caption")
                 game.add_caption(player["id"], cap_text)
 
                 if game.all_players_submitted():
@@ -86,7 +97,6 @@ def client_handler(conn):
             
             elif msg_cmd[0] == "v":
                 player_id = msg_cmd.split()[1]
-                print("voting caption")
                 game.vote_caption(player_id)
 
                 if game.all_players_voted():
@@ -97,7 +107,7 @@ def client_handler(conn):
             elif msg_cmd[0] == "r":
                 game.reset()
 
-            send_to_all_ingame(player["gameId"], pickle.dumps(game))
+            send_to_all_ingame(game.get_gameId(), pickle.dumps(game.to_json()))
 
         except Exception as e:
             print("Error from client_handler:", str(e))
@@ -131,13 +141,12 @@ while True:
 
             game_list[game_id].add_player(connect_clients[client_socket]["id"], username)
 
-            send_to_all_ingame(game_id, pickle.dumps(game_list[game_id]))
+            if current_total_player == TOTAL_PLAYERS:
+                game_list[game_id].start_game()
+                
+            send_to_all_ingame(game_id, pickle.dumps(game_list[game_id].to_json()))
 
-        # TODO: the game isn't start when full of players
         if current_total_player == TOTAL_PLAYERS:
-            print(f"start game {game_id}")
-            game_list[game_id].start_game()
-
             # init new game
             current_total_player = 0
             game_id = uuid.uuid1().int

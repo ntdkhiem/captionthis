@@ -29,10 +29,10 @@ class FinalPage(tk.Frame):
         self.image.configure(image=photo)
         self.image.image = photo
 
-    def update_win_captions(self, captions):
+    def display_caption(self, captions):
         self.win_captions.configure(text="\n".join(captions))
 
-    def update_winners(self, winners):
+    def display_winners(self, winners):
         players = " and ".join(winners)
         self.winners.configure(text=f"{players} gain 1 point")
 

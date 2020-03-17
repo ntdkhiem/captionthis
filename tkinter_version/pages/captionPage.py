@@ -63,7 +63,7 @@ class CaptionPage(tk.Frame):
         self.btn_submit.configure(state="disabled")
 
     def reset(self):
-        self.ent_submit.configure(state="enabled")
-        self.btn_submit.configure(state="enabled")
+        self.ent_submit.configure(state="normal")
+        self.btn_submit.configure(state="normal")
         self.submissions.configure(text="0 caption")
         self.count_down.configure(text="60 seconds")

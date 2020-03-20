@@ -87,6 +87,7 @@ class CaptionThis(tk.Tk):
                 caption_page.update_submission_count(len(game["game"]["captions"]))
             
             elif flag == "vote":
+                print(game)
                 self.show_frame("VotePage")
                 
                 vote_page = self.frames["VotePage"]

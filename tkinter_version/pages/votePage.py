@@ -1,4 +1,5 @@
 import tkinter as tk 
+import functools
 from utils.fonts import LARGE_FONT
 
 
@@ -49,15 +50,19 @@ class VotePage(tk.Frame):
         self.submitted_votes.configure(text=f"{total_votes} votes")
 
     def create_options(self, captions: dict) -> None:
+        j = 0
         if not self.has_options:
             for i, (player_id, value) in enumerate(captions.items()):
-                btn = tk.Button(master=self.options_container, text=value[0], command=lambda: self.vote(player_id))
-                btn.grid(row=0 if i <= 1 else i//i, column=i % 2, sticky="nsew")
+                btn = tk.Button(master=self.options_container, text=value[0], command=functools.partial(self.vote, player_id))
+                btn.grid(row=j, column=i % 2, sticky="nsew")
+                if i % 2 == 1:
+                    j += 1
 
-        self.has_options = True
+            self.has_options = True
 
+    # TODO: only vote for one id 
     def vote(self, player_id):
-
+        print(f"Voting for {player_id}")
         self.controller.send("vote", player_id)
 
         # disable all options

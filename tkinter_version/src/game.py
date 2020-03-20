@@ -58,7 +58,6 @@ class CaptionThisGame:
     def all_players_voted(self): 
         return True if self.get_votes() == len(self.players) else False 
     
-    # TODO: only one winner that got display on the client's side
     def calculate_winners(self): 
         if not self.winners: 
             most_votes = 0 
@@ -105,7 +104,7 @@ class CaptionThisGame:
             self.set_flag("reset")
 
     def to_json(self):
-        return {
+        payload = {
             "game_id": self.get_gameId(),
             "flag": self.get_flag(),
             "ready": self.is_ready(),
@@ -114,8 +113,11 @@ class CaptionThisGame:
                 "players": self.players,
                 "image": self.get_image(),
                 "captions": self.get_captions(),
-                "votes": self.get_votes(),
-                "winners": self.get_winners(),
-                "win_captions": self.get_win_captions()
+                "votes": self.get_votes()
             },
         }
+        if self.get_flag() == "final":
+            payload["game"]["winners"] = self.get_winners()
+            payload["game"]["win_captions"] = self.get_win_captions()
+
+        return payload

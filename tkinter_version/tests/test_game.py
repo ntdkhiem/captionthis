@@ -34,9 +34,8 @@ def test_one_player_disconnected():
     assert len(data["game"]["captions"]) == TOTAL_PLAYERS - 1
 
 def test_all_players_voted():
-    for i in range(len(game.players)):
-        random_player_id = random.choice(list(game.players.keys()))
-        game.vote_caption(random_player_id)
+    game.vote_caption("3")
+    game.vote_caption("3")
     
     assert game.all_players_voted() == True
 
@@ -46,6 +45,7 @@ def test_calculate_winners():
     data = game.to_json()
 
     assert data["game"]["winners"] != []
+    assert data["game"]["winners"] == ["katie"]
     assert data["game"]["win_captions"] != []
 
 def test_game_is_playable():

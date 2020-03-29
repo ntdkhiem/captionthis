@@ -2,7 +2,7 @@ import socket, pickle, uuid
 from _thread import start_new_thread
 from game import CaptionThisGame
 
-SERVER = "10.0.0.113"
+SERVER = "10.0.0.60"
 PORT = 5000
 TOTAL_PLAYERS = 2
 

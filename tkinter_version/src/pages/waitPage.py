@@ -1,7 +1,7 @@
 import tkinter as tk 
 
 # custom packages
-from utils.fonts import LARGE_FONT
+from src.utils.fonts import LARGE_FONT
 
 class WaitPage(tk.Frame):
 

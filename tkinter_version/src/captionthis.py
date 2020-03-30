@@ -1,5 +1,5 @@
 import tkinter as tk 
-import pages
+from src import pages
 from src import socket_client
 from PIL import Image, ImageTk
 
@@ -27,7 +27,7 @@ class CaptionThis(tk.Tk):
             # put all of the pages in the same location
             frame.grid(row=0, column=0, sticky="nsew")
         
-        self.show_frame("ConnectPage")
+        self.show_frame("VotePage")
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
@@ -84,10 +84,13 @@ class CaptionThis(tk.Tk):
                 if not caption_page.has_image():
                     caption_page.upload_image(self.create_image(game["game"]["image"]))
 
+                if game["game"]["timer"][0]:
+                    caption_page.start_count_down()
+                else:
+                    caption_page.set_count_down(game["game"]["timer"][1])
                 caption_page.update_submission_count(len(game["game"]["captions"]))
             
             elif flag == "vote":
-                print(game)
                 self.show_frame("VotePage")
                 
                 vote_page = self.frames["VotePage"]
@@ -121,7 +124,7 @@ class CaptionThis(tk.Tk):
 
     def create_image(self, source):
         if not self.current_image:
-            image = Image.open(f"images\\{source}")
+            image = Image.open(f"src\\images\\{source}")
             photo = ImageTk.PhotoImage(image)
             self.current_image = photo
         return self.current_image

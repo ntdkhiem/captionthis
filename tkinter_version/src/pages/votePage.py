@@ -1,6 +1,6 @@
 import tkinter as tk 
 import functools
-from utils.fonts import LARGE_FONT
+from src.utils.fonts import LARGE_FONT
 
 
 class VotePage(tk.Frame):
@@ -26,13 +26,13 @@ class VotePage(tk.Frame):
 
         info_container = tk.Frame(master=choice_container)
         info_container.grid(row=0, column=1, sticky="nsew")
-        info_container.rowconfigure([0,1], weight=1)
+        info_container.rowconfigure(0, weight=1)
 
         self.submitted_votes = tk.Label(master=info_container, text="0 vote", font=LARGE_FONT)
         self.submitted_votes.grid(row=0, column=0, sticky="nsew", padx=10)
 
-        self.countdown = tk.Label(master=info_container, text="60 seconds", font=LARGE_FONT)
-        self.countdown.grid(row=1, column=0, sticky="nsew", padx=10)
+        # self.countdown = tk.Label(master=info_container, text="60 seconds", font=LARGE_FONT)
+        # self.countdown.grid(row=1, column=0, sticky="nsew", padx=10)
 
         self.options_container = tk.Frame(master=display_container)
         self.options_container.grid(row=1, column=0, sticky="nsew")
@@ -59,8 +59,7 @@ class VotePage(tk.Frame):
                     j += 1
 
             self.has_options = True
-
-    # TODO: only vote for one id 
+            
     def vote(self, player_id):
         print(f"Voting for {player_id}")
         self.controller.send("vote", player_id)

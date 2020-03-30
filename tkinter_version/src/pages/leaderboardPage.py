@@ -1,5 +1,5 @@
 import tkinter as tk 
-from utils.fonts import LARGE_FONT
+from src.utils.fonts import LARGE_FONT
 
 class LeaderboardPage(tk.Frame):
 

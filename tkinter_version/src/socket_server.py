@@ -1,10 +1,12 @@
 import socket, pickle, uuid
 from _thread import start_new_thread
+from threading import Timer
 from game import CaptionThisGame
 
 SERVER = "10.0.0.60"
 PORT = 5000
 TOTAL_PLAYERS = 2
+DURATION_OF_CAPTION = 10
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -55,8 +57,17 @@ def remove_socket(client_socket):
     if connect_clients.get(client_socket) != None:
         del connect_clients[client_socket]
 
+def time_up(game_id):
+    '''
+        Stop caption submission and proceed to next stage
+    '''
+    global game_list
+    game = game_list[game_id]
+    game.set_flag("vote")
+    send_to_all_ingame(game_id, pickle.dumps(game.to_json()))
+
 def client_handler(conn):
-    global connect_clients, game_list, current_total_player, game_id
+    global connect_clients, game_list, current_total_player, game_id, threaded_timers
     
     player = connect_clients[conn]
     game = game_list[player["gameId"]]
@@ -80,9 +91,7 @@ def client_handler(conn):
 
                             disconnect_all_ingame(game.get_gameId())
                             del game_list[game.get_gameId()]
-
                     remove_socket(conn)
-
                 break
             
 
@@ -92,8 +101,19 @@ def client_handler(conn):
                     game.set_flag("caption")
                 game.add_caption(player["id"], cap_text)
 
+                # set timer when first captions submitted
+                if len(game.get_captions()) == 1:
+                    threaded_timers[game.get_gameId()] = Timer(DURATION_OF_CAPTION, time_up, args=(game.get_gameId(),))
+                    threaded_timers[game.get_gameId()].start()
+                    
+                    game_list[game.get_gameId()].start_timer = True
+
                 if game.all_players_submitted():
                     game.set_flag("vote")
+                    # cancel timer if exist
+                    if threaded_timers[game.get_gameId()].is_alive():
+                        threaded_timers[game.get_gameId()].cancel()
+                        del threaded_timers[game.get_gameId()]
             
             elif msg_cmd[0] == "v":
                 player_id = msg_cmd.split()[1]
@@ -119,7 +139,8 @@ def client_handler(conn):
 
 current_total_player = 0
 game_id = uuid.uuid1().int
-game_list = {game_id:CaptionThisGame(game_id, TOTAL_PLAYERS)}
+game_list = {game_id:CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION)}
+threaded_timers = {}
 
 while True:
     client_socket, client_address = server_socket.accept()
@@ -150,7 +171,7 @@ while True:
             # init new game
             current_total_player = 0
             game_id = uuid.uuid1().int
-            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS)
+            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION)
 
         start_new_thread(client_handler, (client_socket,))
 

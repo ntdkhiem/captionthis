@@ -1,11 +1,13 @@
 import random 
 
 class CaptionThisGame: 
-    def __init__(self, gameId, total_players=5): 
+    def __init__(self, gameId, total_players=5, game_duration=0): 
         self.gameId = gameId 
         self.total_players = total_players 
         self.players = {} 
         self.captions = {} 
+        self.timer = game_duration
+        self.start_timer = False
         self.winners = [] 
         self.win_captions = [] 
         self.total_votes = 0 
@@ -28,7 +30,7 @@ class CaptionThisGame:
         return self.image
 
     def set_image(self):
-        return random.choice(random._os.listdir("../images"))
+        return random.choice(random._os.listdir("images"))
 
     def get_flag(self): 
         return self.flag 
@@ -112,6 +114,7 @@ class CaptionThisGame:
                 "total_players": self.total_players,
                 "players": self.players,
                 "image": self.get_image(),
+                "timer": [self.start_timer, self.timer],
                 "captions": self.get_captions(),
                 "votes": self.get_votes()
             },

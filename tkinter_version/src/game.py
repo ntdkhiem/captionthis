@@ -1,7 +1,7 @@
 import random 
 
 class CaptionThisGame: 
-    def __init__(self, gameId, total_players=5, game_duration=0): 
+    def __init__(self, gameId, total_players=5, game_duration=0, thread_lock=None): 
         self.gameId = gameId 
         self.total_players = total_players 
         self.players = {} 
@@ -15,6 +15,7 @@ class CaptionThisGame:
         self.total_games = 0 
         self.ready = False 
         self.flag = "wait" 
+        self.lock = thread_lock
         
     def is_ready(self): 
         return self.ready 
@@ -54,8 +55,9 @@ class CaptionThisGame:
         return self.total_votes 
     
     def vote_caption(self, voted_player_id): 
-        self.total_votes += 1 
-        self.captions[voted_player_id][1] += 1 
+        with self.lock:
+            self.total_votes += 1 
+            self.captions[voted_player_id][1] += 1 
     
     def all_players_voted(self): 
         return True if self.get_votes() == len(self.players) else False 

@@ -1,12 +1,12 @@
 import socket, pickle, uuid
 from _thread import start_new_thread
-from threading import Timer
+from threading import Timer, Lock
 from game import CaptionThisGame
 
 SERVER = "10.0.0.60"
 PORT = 5000
 TOTAL_PLAYERS = 2
-DURATION_OF_CAPTION = 10
+DURATION_OF_CAPTION = 120
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -139,7 +139,7 @@ def client_handler(conn):
 
 current_total_player = 0
 game_id = uuid.uuid1().int
-game_list = {game_id:CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION)}
+game_list = {game_id:CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION, Lock())}
 threaded_timers = {}
 
 while True:
@@ -171,7 +171,7 @@ while True:
             # init new game
             current_total_player = 0
             game_id = uuid.uuid1().int
-            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION)
+            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS, DURATION_OF_CAPTION, Lock())
 
         start_new_thread(client_handler, (client_socket,))
 

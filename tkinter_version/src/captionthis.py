@@ -27,7 +27,7 @@ class CaptionThis(tk.Tk):
             # put all of the pages in the same location
             frame.grid(row=0, column=0, sticky="nsew")
         
-        self.show_frame("VotePage")
+        self.show_frame("ConnectPage")
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''

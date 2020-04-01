@@ -1,41 +1,31 @@
-import tkinter as tk 
-
+import tkinter as tk
+from src.utils.fonts import LARGE_FONT
 
 class FinalPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        
+
         display_container = tk.Frame(master=self)
         display_container.pack(fill="both", expand=True)
-        display_container.rowconfigure(0, minsize=30, weight=1)
-        display_container.rowconfigure(1, minsize=50, weight=1)
+        display_container.rowconfigure(0, minsize=100, weight=1)
         display_container.columnconfigure(0, weight=1)
         
-        self.image = tk.Label(master=display_container, image=None, text="Image here...")
-        self.image.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        self.winner = tk.Label(master=display_container, text="{} is the unofficial meme lord!!", font=LARGE_FONT)
+        self.winner.grid(row=0, column=0, sticky="nsew")
 
-        self.win_captions = tk.Label(master=display_container, text="winning caption here...")
-        self.win_captions.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
-        
-        self.winners = tk.Label(master=display_container, text="player 4 get 1 point!")
-        self.winners.grid(row=2, column=0, sticky="nsew", padx=20, pady=20)
+        btn_new_game = tk.Button(master=display_container, text="New Game", command=self.new_game)
+        btn_new_game.grid(row=1, column=0, sticky="ew")
 
-    def has_image(self):
-        return self.image["image"]
+    def update_winner(self, winners):
+        if len(winners) == 1:
+            self.winner.configure(text=f"Congratulation! {winners[0]} is the meme lord. (unofficially)")
+        else:
+            self.winner.configure(text=f"Congratulation! {' and '.join(winners)} are the meme lord. (unofficially")
 
-    def upload_image(self, photo):
-        self.image.configure(image=photo)
-        self.image.image = photo
-
-    def display_caption(self, captions):
-        self.win_captions.configure(text="\n".join(captions))
-
-    def display_winners(self, winners):
-        players = " and ".join(winners)
-        self.winners.configure(text=f"{players} gain 1 point")
-
+    def new_game(self):
+        self.controller.send("new", "")
+    
     def reset(self):
-        self.win_captions.configure(text="")
-        self.winners.configure(text="")
+        self.winner.configure(text="")

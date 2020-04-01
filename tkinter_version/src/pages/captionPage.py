@@ -66,6 +66,9 @@ class CaptionPage(tk.Frame):
             self.interval -= 1
             self.after(1 * 1000, self.start_count_down)
 
+    def stop_count_down(self):
+        self.interval = 0
+
     def submit(self):
         caption = self.ent_submit.get()
 
@@ -80,3 +83,4 @@ class CaptionPage(tk.Frame):
         self.btn_submit.configure(state="normal")
         self.submissions.configure(text="0 caption")
         self.count_down.configure(text="0 seconds")
+        self.interval = 0

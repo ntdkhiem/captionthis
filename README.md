@@ -12,7 +12,7 @@ The winner will be determine after all matches and will *unofficially* be the me
 ```bash
 pip install -r requirements.txt
 ```
-- Input your Ip Address (how to find) in `src/socket_server.py` line 6
+- Input your Ip Address ([how to find!](https://www.posim.com/knowledgebase/finding-ip-address-windows/)) in `src/socket_server.py` line 6
 
 - Start the server
 ```bash

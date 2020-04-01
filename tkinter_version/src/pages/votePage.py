@@ -31,9 +31,6 @@ class VotePage(tk.Frame):
         self.submitted_votes = tk.Label(master=info_container, text="0 vote", font=LARGE_FONT)
         self.submitted_votes.grid(row=0, column=0, sticky="nsew", padx=10)
 
-        # self.countdown = tk.Label(master=info_container, text="60 seconds", font=LARGE_FONT)
-        # self.countdown.grid(row=1, column=0, sticky="nsew", padx=10)
-
         self.options_container = tk.Frame(master=display_container)
         self.options_container.grid(row=1, column=0, sticky="nsew")
         self.options_container.rowconfigure([0,1], weight=1)
@@ -61,7 +58,6 @@ class VotePage(tk.Frame):
             self.has_options = True
             
     def vote(self, player_id):
-        print(f"Voting for {player_id}")
         self.controller.send("vote", player_id)
 
         # disable all options

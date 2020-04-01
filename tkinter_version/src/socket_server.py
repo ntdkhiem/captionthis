@@ -5,9 +5,9 @@ from game import CaptionThisGame
 
 SERVER = "10.0.0.60"
 PORT = 5000
-TOTAL_PLAYERS = 2
-TOTAL_GAMES = 3
-DURATION_OF_CAPTION = 10
+TOTAL_PLAYERS = 5
+TOTAL_GAMES = 10
+DURATION_PER_CAPTION = 120
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -106,7 +106,7 @@ def client_handler(conn):
 
                 # set timer when first captions submitted
                 if len(game.get_captions()) == 1:
-                    threaded_timers[game.get_gameId()] = Timer(DURATION_OF_CAPTION, time_up, args=(game.get_gameId(),))
+                    threaded_timers[game.get_gameId()] = Timer(DURATION_PER_CAPTION, time_up, args=(game.get_gameId(),))
                     threaded_timers[game.get_gameId()].start()
                     
                     game_list[game.get_gameId()].start_timer = True
@@ -145,7 +145,7 @@ def client_handler(conn):
 
 current_total_player = 0
 game_id = uuid.uuid1().int
-game_list = {game_id:CaptionThisGame(game_id, total_players=TOTAL_PLAYERS, total_games=TOTAL_GAMES, game_duration=DURATION_OF_CAPTION, thread_lock=Lock())}
+game_list = {game_id:CaptionThisGame(game_id, total_players=TOTAL_PLAYERS, total_games=TOTAL_GAMES, game_duration=DURATION_PER_CAPTION, thread_lock=Lock())}
 threaded_timers = {}
 
 while True:
@@ -177,7 +177,7 @@ while True:
             # init new game
             current_total_player = 0
             game_id = uuid.uuid1().int
-            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS, TOTAL_GAMES, DURATION_OF_CAPTION, Lock())
+            game_list[game_id] = CaptionThisGame(game_id, TOTAL_PLAYERS, TOTAL_GAMES, DURATION_PER_CAPTION, Lock())
 
         start_new_thread(client_handler, (client_socket,))
 

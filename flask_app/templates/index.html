@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caption This</title>
+</head>
+<body>
+    <h1>Welcome to Caption This Online Game!</h1>
+
+    <!-- Will remove later on. -->
+    <h4>Login Section</h4>
+    <p>This is a section where player will enter their username and login to the game</p>
+
+    <form action="" method="post">
+        <input type="text" name="username" id="username">
+        <input type="submit" value="Join">
+    </form>
+
+    <hr>
+
+    <div id="wait">
+        <!-- Will remove later on. -->
+        <h4>Waiting Section</h4>
+        <p>This is a section where connected player will wait for others to join before the game begins (5 players). Player will also be able to fill the room with computers if it took too long to wait for others.</p>
+
+        <p>Wait for 2 more people...</p>
+        <!-- option to fill the room with COMs -->
+        <button>Fill the room with COM</button>
+    </div>
+
+    <hr>
+    
+    <div id="caption">
+        <!-- Will remove later on. -->
+        <h4>Caption Section</h4>
+        <p>This is a section where players will be able to give their caption idea based on the picture.</p>
+
+        <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
+        <div class="caption">
+            <form action="" method="post">
+                <input type="text" name="caption" id="caption">
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+        <div class="info">
+            <div class="submissions">2 captions</div>
+            <div class="timer">60 seconds</div>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <div id="vote">
+        <!-- Will remove later on. -->
+        <h4>Vote Section</h4>
+        <p>This is a section where players will be able to vote captions (including their) based on the picture.</p>
+
+        <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
+        <ul class="options">
+           <li class="option 1"><a href="#!">Option 1</a></li>
+           <li class="option 2"><a href="#!">Option 2</a></li>
+           <li class="option 3"><a href="#!">Option 3</a></li> 
+        </ul>
+        <div class="info">
+            <div class="votes">2 votes</div>
+            <div class="timer">60 seconds</div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div id="win">
+        <!-- Will remove later on. -->
+        <h4>Win Section</h4>
+        <p>This is a section where the game will determine the player(s) with the most votes.</p>
+
+        <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
+        <div class="winCaption">{Win Caption(s) here}</div>
+        <div class="winners">{player(s)} win!</div>
+    </div>
+
+    <hr>
+
+    <div id="leaderboard">
+        <!-- Will remove later on. -->
+        <h4>Leaderboard Section</h4>
+        <p>This is a section where the game will display players from highest to lowest points.</p>
+
+        <ul>
+            <li>Player 1 - 5 pts</li>
+            <li>Player 2 - 3 pts</li>
+            <li>Player 3 - 2 pts</li>
+        </ul>
+        <button>Next Match</button>
+    </div>
+    
+    <hr>
+
+    <div id="final">
+        <!-- Will remove later on. -->
+        <h4>Final Section (appears after 10 matches)</h4>
+        <p>This is a final section where the game will determine player(s) with the most points to win the game.</p>
+
+        <strong>Congratulation! {player} will hereby unofficially called the great meme lord.</strong>
+        <button>Reset Game</button>
+    </div>
+</body>
+</html>

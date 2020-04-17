@@ -1,7 +1,3 @@
-import random 
-import threading
-import os
-
 class CaptionThisGame: 
     def __init__(self, gameId, total_players=5, total_games=0, game_duration=0): 
         self.gameId = gameId 

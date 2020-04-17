@@ -51,7 +51,7 @@ def on_join(data):
 
         send(rooms[room_id].to_json(), room=room_id)
 
-    print(f"[+] accepted client {request.sid}...")
+    print(f"[+] accepted client {username}:{request.sid}...")
     
     if players_ingame == TOTAL_PLAYERS:
         new_game()
@@ -62,11 +62,14 @@ def on_caption(data):
     player = connected_clients[request.sid]
     game = rooms[player["roomId"]]
     
+    if game.get_flag() == "reset":
+        game.set_flag("caption")
+
     game.add_caption(player["id"], data["msg"])
     
     if game.all_players_submitted():
         game.set_flag("vote")
-
+    
     send(game.to_json(), room=player["roomId"])
 
 @socketio.on("vote")

@@ -82,5 +82,14 @@ def on_vote(data):
 
     send(game.to_json(), room=player["roomId"])
 
+@socketio.on("new")
+def on_new(data):
+    player = connected_clients[request.sid]
+    game = rooms[player["roomId"]]
+
+    game.reset(data["newGame"])
+
+    send(game.to_json(), room=player["roomId"])
+
 if __name__ == "__main__":
     socketio.run(app, debug=True)

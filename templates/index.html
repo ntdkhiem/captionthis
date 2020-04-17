@@ -24,9 +24,9 @@
         <h4>Waiting Section</h4>
         <p>This is a section where connected player will wait for others to join before the game begins (5 players). Player will also be able to fill the room with computers if it took too long to wait for others.</p>
 
-        <p id="waitMsg">Wait for 0 more people...</p>
+        <h4 id="waitMsg">Wait for 0 more people...</h4>
         <!-- option to fill the room with COMs -->
-        <button>Fill the room with COM</button>
+        <button>Fill the room with COM (NOT YET)</button>
     </div>
 
     <hr>
@@ -44,8 +44,8 @@
             </form>
         </div>
         <div class="info">
-            <div id="captionSubmissions">0 captions</div>
-            <div id="captionTimer">60 seconds</div>
+            <h4 id="captionSubmissions">0 captions</h4>
+            <h4 id="captionTimer">60 seconds</h4>
         </div>
     </div>
     
@@ -61,7 +61,7 @@
         <div id="voteOptions">
         </div>
         <div class="info">
-            <div id="voteVotes">2 votes</div>
+            <h4 id="voteVotes">2 votes</h4>
         </div>
     </div>
 
@@ -73,8 +73,8 @@
         <p>This is a section where the game will determine the player(s) with the most votes.</p>
 
         <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
-        <div id="winCaption">{Win Caption(s) here}</div>
-        <div id="winners">{player(s)} win!</div>
+        <h4 id="winCaption">{Win Caption(s) here}</h4>
+        <h4 id="winners">{player(s)} win!</h4>
     </div>
 
     <hr>
@@ -84,23 +84,20 @@
         <h4>Leaderboard Section</h4>
         <p>This is a section where the game will display players from highest to lowest points.</p>
 
-        <ul>
-            <li>Player 1 - 5 pts</li>
-            <li>Player 2 - 3 pts</li>
-            <li>Player 3 - 2 pts</li>
-        </ul>
-        <button>Next Match</button>
+        <div id="leaderboardPlayers">
+        </div>
+        <button onClick="newGame(false)">Next Match</button>
     </div>
     
     <hr>
 
     <div id="final">
         <!-- Will remove later on. -->
-        <h4>Final Section (appears after 10 matches)</h4>
+        <h4>Final Section (appears after 3 matches)</h4>
         <p>This is a final section where the game will determine player(s) with the most points to win the game.</p>
 
-        <strong>Congratulation! {player} will hereby unofficially called the great meme lord.</strong>
-        <button>Reset Game</button>
+        <strong id="memelords">Congratulation! {player} will hereby unofficially called the great meme lord.</strong>
+        <button onClick="newGame(true)">Reset Game</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
@@ -114,11 +111,29 @@
 
         socket.on("message", function(data) {
             console.log(data)
-            if (data.flag == "wait") {
+            flag = data.flag
+
+            if (flag == "done") {
+                $("#leaderboard").css("background-color", "white")
+                $("#final").css("background-color", "#ffcccc")
+
+                winners = data.game.memelords
+                $("#memelords").text(`Congratulation! ${winners} will herby unofficially called the great meme lord!`)
+            }
+
+            if (flag == "reset") {
+                $("#leaderboard").css("background-color", "white")
+                $("#caption").css("background-color", "#ffcccc")
+                reset()
+
+                flag = "caption"
+            }
+
+            if (flag == "wait") {
                 $("#wait").css("background-color", "#ffcccc")
                 $("#waitMsg").text(`Waiting for ${data.game.total_players - Object.keys(data.game.players).length} more players...`)
             }
-            else if (data.flag == "caption") {
+            else if (flag == "caption") {
                 $("#wait").css("background-color", "white")
                 $("#caption").css("background-color", "#ffcccc")
 
@@ -129,11 +144,14 @@
                 $("#captionForm").on("submit", function(e) {
                     e.preventDefault()
                     socket.emit("caption", {msg: $("#captionText").val()})
+
+                    $("#captionForm")[0].reset()
+
                     $("#captionForm :input").prop("disabled", true);
                 })
 
             }
-            else if (data.flag == "vote") {
+            else if (flag == "vote") {
                 $("#caption").css("background-color", "white")
                 $("#vote").css("background-color", "#ffcccc")
 
@@ -147,13 +165,15 @@
                     });
                 }
             }
-            else if (data.flag == "win") {
+            else if (flag == "win") {
                 $("#vote").css("background-color", "white")
                 $("#win").css("background-color", "#ffcccc")
 
                 $("#winCaption").text(`${data.game.win_captions}`)
 
                 $("#winners").text(`${data.game.winners} win!`)
+
+                setTimeout(switchToLeaderboard, 3 * 1000, data.game.players)
             }
         });
 
@@ -163,9 +183,49 @@
         })
 
         function vote(player_id) {
+            console.log(`Voting for ${player_id}`)
+
             socket.emit("vote", {id: player_id})
             
             $("#voteOptions").children().prop('disabled',true);
+        }
+
+        function switchToLeaderboard(players) {
+            $("#win").css("background-color", "white")
+            $("#leaderboard").css("background-color", "#ffcccc")
+
+            if ($("#leaderboardPlayers").children().length == 0) {
+                Object.keys(players).forEach(function(key) {
+                    var div = $(`<div>${players[key][0]} - ${players[key][1]} points</div>`)
+                    $("#leaderboardPlayers").append(div)
+                })
+            }
+        }
+
+        function newGame(newGame) {
+            console.log("calling for new game...")
+            socket.emit("new", {newGame})
+        }
+
+        function reset() {
+            console.log("Resetting the game...")
+            
+            // caption div
+            $("#captionForm :input").prop("disabled", false);
+            $("#captionSubmissions").text("0 captions")
+            $("#captionTimer").text("60 seconds")
+            
+            // vote div
+            $("#voteOptions").empty()
+            $("#voteVotes").text("0 vote")
+            
+            // win div
+            $("#winCaption").text("{Win Caption(s) here}")
+            $("#winners").text("{player(s)} win!")
+            
+            // leaderboard div
+            $("#leaderboardPlayers").empty()
+
         }
     </script>
 </body>

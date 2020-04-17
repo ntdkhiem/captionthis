@@ -86,7 +86,7 @@
 
         <div id="leaderboardPlayers">
         </div>
-        <button onClick="newGame(false)">Next Match</button>
+        <button onClick="newGame(false)">Next</button>
     </div>
     
     <hr>
@@ -141,15 +141,6 @@
                 
                 // TODO: Count down timer here
 
-                $("#captionForm").on("submit", function(e) {
-                    e.preventDefault()
-                    socket.emit("caption", {msg: $("#captionText").val()})
-
-                    $("#captionForm")[0].reset()
-
-                    $("#captionForm :input").prop("disabled", true);
-                })
-
             }
             else if (flag == "vote") {
                 $("#caption").css("background-color", "white")
@@ -182,9 +173,17 @@
             socket.emit("join", {username: $("#username").val()})
         })
 
-        function vote(player_id) {
-            console.log(`Voting for ${player_id}`)
+        $("#captionForm").on("submit", function(e) {
+            e.preventDefault()
+            
+            socket.emit("caption", {msg: $("#captionText").val()})
 
+            $("#captionForm")[0].reset()
+
+            $("#captionForm :input").prop("disabled", true);
+        })
+
+        function vote(player_id) {
             socket.emit("vote", {id: player_id})
             
             $("#voteOptions").children().prop('disabled',true);
@@ -208,8 +207,6 @@
         }
 
         function reset() {
-            console.log("Resetting the game...")
-            
             // caption div
             $("#captionForm :input").prop("disabled", false);
             $("#captionSubmissions").text("0 captions")
@@ -225,7 +222,6 @@
             
             // leaderboard div
             $("#leaderboardPlayers").empty()
-
         }
     </script>
 </body>

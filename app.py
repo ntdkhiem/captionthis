@@ -84,16 +84,18 @@ def on_caption(data):
     game.add_caption(player["id"], data["msg"])
     
     if len(game.get_captions()) == 1:
-        timers[game.get_gameId()] = socketio.start_background_task(start_timer, game.get_gameId(), DURATION_PER_CAPTION)
+        # timers[game.get_gameId()] = socketio.start_background_task(start_timer, game.get_gameId(), DURATION_PER_CAPTION)
 
         game.start_timer = True
 
     if game.all_players_submitted():
         # cancel timer if existed
-        if timers[game.get_gameId()].is_alive():
+        # if timers[game.get_gameId()].is_alive():
             # TODO: AttributeError: 'Thread' object has no attribute 'stop'
-            timers[game.get_gameId()].stop()
-            del timers[game.get_gameId()]
+            # https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread
+            # https://stackoverflow.com/questions/34923928/stopping-a-thread-once-condition-matches
+            # timers[game.get_gameId()].stop()
+            # del timers[game.get_gameId()]
         rooms[game.get_gameId()].start_timer = False
         
         game.set_flag("vote")

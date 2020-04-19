@@ -4,22 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caption This</title>
+    <style>
+      section:not(.visible) {
+        display: none;
+      }
+    </style>
 </head>
 <body>
     <h1>Welcome to Caption This Online Game!</h1>
 
-    <!-- Will remove later on. -->
-    <h4>Login Section</h4>
-    <p>This is a section where player will enter their username and login to the game</p>
-
-    <form id="join">
+    <section id="join-section" class="visible">
+      <!-- Will remove later on. -->
+      <h4>Login Section</h4>
+      <p>This is a section where player will enter their username and login to the game</p>
+      
+      <form id="join">
         <input type="text" name="username" id="username">
         <input type="submit" value="Join">
-    </form>
+      </form>
+    </section>
 
-    <hr>
+    <!--<hr>-->
 
-    <div id="wait">
+    <section id="wait">
         <!-- Will remove later on. -->
         <h4>Waiting Section</h4>
         <p>This is a section where connected player will wait for others to join before the game begins (5 players). Player will also be able to fill the room with computers if it took too long to wait for others.</p>
@@ -27,11 +34,11 @@
         <h4 id="waitMsg">Wait for 0 more people...</h4>
         <!-- option to fill the room with COMs -->
         <button>Fill the room with COM (NOT YET)</button>
-    </div>
+    </section>
 
-    <hr>
+    <!--<hr>-->
     
-    <div id="caption">
+    <section id="caption">
         <!-- Will remove later on. -->
         <h4>Caption Section</h4>
         <p>This is a section where players will be able to give their caption idea based on the picture.</p>
@@ -47,11 +54,11 @@
             <h4 id="captionSubmissions">0 captions</h4>
             <h4 id="captionTimer">00:00</h4>
         </div>
-    </div>
+    </section>
     
-    <hr>
+    <!--<hr>-->
     
-    <div id="vote">
+    <section id="vote">
         <!-- Will remove later on. -->
         <h4>Vote Section</h4>
         <p>This is a section where players will be able to vote captions (including their) based on the picture.</p>
@@ -63,11 +70,11 @@
         <div class="info">
             <h4 id="voteVotes">2 votes</h4>
         </div>
-    </div>
+    </section>
 
-    <hr>
+    <!--<hr>-->
 
-    <div id="win">
+    <section id="win">
         <!-- Will remove later on. -->
         <h4>Win Section</h4>
         <p>This is a section where the game will determine the player(s) with the most votes.</p>
@@ -75,11 +82,11 @@
         <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
         <h4 id="winCaption">{Win Caption(s) here}</h4>
         <h4 id="winners">{player(s)} win!</h4>
-    </div>
+    </section>
 
-    <hr>
+    <!--<hr>-->
 
-    <div id="leaderboard">
+    <section id="leaderboard">
         <!-- Will remove later on. -->
         <h4>Leaderboard Section</h4>
         <p>This is a section where the game will display players from highest to lowest points.</p>
@@ -87,18 +94,18 @@
         <div id="leaderboardPlayers">
         </div>
         <button onClick="newGame(false)">Next</button>
-    </div>
+    </section>
     
-    <hr>
+    <!--<hr>-->
 
-    <div id="final">
+    <section id="final">
         <!-- Will remove later on. -->
         <h4>Final Section (appears after 3 matches)</h4>
         <p>This is a final section where the game will determine player(s) with the most points to win the game.</p>
 
         <strong id="memelords">Congratulation! {player} will hereby unofficially called the great meme lord.</strong>
         <button onClick="newGame(true)">Reset Game</button>
-    </div>
+    </section>
 
     <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
@@ -115,28 +122,37 @@
             flag = data.flag
 
             if (flag == "done") {
-                $("#leaderboard").css("background-color", "white")
-                $("#final").css("background-color", "#ffcccc")
+                /*$("#leaderboard").css("background-color", "white")
+                $("#final").css("background-color", "#ffcccc")*/
+                $("#leaderboard").removeClass("visible");
+                $("#final").addClass("visible");
 
                 winners = data.game.memelords
                 $("#memelords").text(`Congratulation! ${winners} will herby unofficially called the great meme lord!`)
             }
 
             if (flag == "reset") {
-                $("#leaderboard").css("background-color", "white")
-                $("#caption").css("background-color", "#ffcccc")
+                /*$("#leaderboard").css("background-color", "white")
+                $("#caption").css("background-color", "#ffcccc")*/
+                $("#leaderboard").removeClass("visible");
+                $("#caption").addClass("visible");
                 reset()
 
                 flag = "caption"
             }
 
             if (flag == "wait") {
-                $("#wait").css("background-color", "#ffcccc")
+                //$("#wait").css("background-color", "#ffcccc")
+                $("#join-section").removeClass("visible")
+                $("#wait").addClass("visible");
                 $("#waitMsg").text(`Waiting for ${data.game.total_players - Object.keys(data.game.players).length} more players...`)
             }
             else if (flag == "caption") {
-                $("#wait").css("background-color", "white")
-                $("#caption").css("background-color", "#ffcccc")
+                /*$("#wait").css("background-color", "white")
+                $("#caption").css("background-color", "#ffcccc")*/
+                $("#join-section").removeClass("visible")
+                $("#wait").removeClass("visible");
+                $("#caption").addClass("visible");
 
                 $("#captionSubmissions").text(`${Object.keys(data.game.captions).length} caption`)
                 
@@ -148,8 +164,10 @@
 
             }
             else if (flag == "vote") {
-                $("#caption").css("background-color", "white")
-                $("#vote").css("background-color", "#ffcccc")
+                /*$("#caption").css("background-color", "white")
+                $("#vote").css("background-color", "#ffcccc")*/
+                $("#caption").removeClass("visible");
+                $("#vote").addClass("visible");
                 
                 // stop the timer if not already
                 stopTimer()
@@ -165,8 +183,10 @@
                 }
             }
             else if (flag == "win") {
-                $("#vote").css("background-color", "white")
-                $("#win").css("background-color", "#ffcccc")
+                /*$("#vote").css("background-color", "white")
+                $("#win").css("background-color", "#ffcccc")*/
+                $("#vote").removeClass("visible");
+                $("#win").addClass("visible");
 
                 $("#winCaption").text(`${data.game.win_captions}`)
 
@@ -197,8 +217,10 @@
         }
 
         function switchToLeaderboard(players) {
-            $("#win").css("background-color", "white")
-            $("#leaderboard").css("background-color", "#ffcccc")
+            /*$("#win").css("background-color", "white")
+            $("#leaderboard").css("background-color", "#ffcccc")*/
+            $("#win").removeClass("visible");
+            $("#leaderboard").addClass("visible");
 
             if ($("#leaderboardPlayers").children().length == 0) {
                 Object.keys(players).forEach(function(key) {
@@ -242,6 +264,9 @@
             
             // leaderboard div
             $("#leaderboardPlayers").empty()
+
+            //hide final sectoin
+            $("#final").removeClass("visible");
         }
     </script>
 </body>

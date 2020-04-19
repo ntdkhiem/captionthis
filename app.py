@@ -9,11 +9,11 @@ socketio = SocketIO(app)
 
 TOTAL_PLAYERS = 2
 TOTAL_GAMES = 3
-DURATION_PER_CAPTION = 60
+DURATION_PER_CAPTION = 10
 rooms = {}
 room_id = shortuuid.uuid()
+timers = {}
 players_ingame = 0
-threaded_timers = {}
 
 connected_clients = {}
 
@@ -23,6 +23,22 @@ def new_game():
     players_ingame = 0
     room_id = shortuuid.uuid()  
     rooms[room_id] = game.CaptionThisGame(room_id, total_players=TOTAL_PLAYERS, total_games=TOTAL_GAMES, game_duration=DURATION_PER_CAPTION)
+
+def start_timer(room_id, interval):
+    '''
+        Stop caption submission and proceed to next stage
+    '''
+    global rooms
+
+    for _ in range(interval):
+        socketio.sleep(1)
+
+    if rooms.get(room_id):
+        game = rooms[room_id]
+        game.start_timer = False
+        game.set_flag("vote")
+
+        socketio.emit('message', game.to_json(), room=room_id)
 
 @app.route("/")
 def index():
@@ -67,7 +83,19 @@ def on_caption(data):
 
     game.add_caption(player["id"], data["msg"])
     
+    if len(game.get_captions()) == 1:
+        timers[game.get_gameId()] = socketio.start_background_task(start_timer, game.get_gameId(), DURATION_PER_CAPTION)
+
+        game.start_timer = True
+
     if game.all_players_submitted():
+        # cancel timer if existed
+        if timers[game.get_gameId()].is_alive():
+            # TODO: AttributeError: 'Thread' object has no attribute 'stop'
+            timers[game.get_gameId()].stop()
+            del timers[game.get_gameId()]
+        rooms[game.get_gameId()].start_timer = False
+        
         game.set_flag("vote")
     
     send(game.to_json(), room=player["roomId"])
@@ -95,4 +123,4 @@ def on_new(data):
     send(game.to_json(), room=player["roomId"])
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)

@@ -45,7 +45,7 @@
         </div>
         <div class="info">
             <h4 id="captionSubmissions">0 captions</h4>
-            <h4 id="captionTimer">60 seconds</h4>
+            <h4 id="captionTimer">00:00</h4>
         </div>
     </div>
     
@@ -104,6 +104,7 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
     <script type="text/javascript">
         var socket = io.connect("http://" + document.domain + ":" + location.port, {reconnection:false})
+        var timer;
 
         socket.on("connect", function() {
             console.log("Websocket established!")
@@ -139,12 +140,19 @@
 
                 $("#captionSubmissions").text(`${Object.keys(data.game.captions).length} caption`)
                 
-                // TODO: Count down timer here
+                if (data.game.timer[0]) {
+                    timer = startTimer(data.game.timer[1], $("#captionTimer"))
+                } else {
+                    $("#captionTimer").text(`${data.game.timer[1]} seconds`)
+                }
 
             }
             else if (flag == "vote") {
                 $("#caption").css("background-color", "white")
                 $("#vote").css("background-color", "#ffcccc")
+                
+                // stop the timer if not already
+                stopTimer()
 
                 $("#voteVotes").text(`${data.game.votes} votes`)
 
@@ -179,7 +187,6 @@
             socket.emit("caption", {msg: $("#captionText").val()})
 
             $("#captionForm")[0].reset()
-
             $("#captionForm :input").prop("disabled", true);
         })
 
@@ -201,8 +208,21 @@
             }
         }
 
+        function startTimer(duration, display) {
+            var x = setInterval(function() {
+                display.text(`${duration} seconds`)
+                if (--duration < 0) {
+                    clearInterval(x)
+                }
+            }, 1000)
+            return x
+        }
+
+        function stopTimer() {
+            clearInterval(timer)
+        }
+
         function newGame(newGame) {
-            console.log("calling for new game...")
             socket.emit("new", {newGame})
         }
 

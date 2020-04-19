@@ -1,6 +1,6 @@
 import shortuuid
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, join_room, leave_room, emit, send
+from flask_socketio import SocketIO, join_room, leave_room, emit, send, disconnect
 import game
 
 
@@ -24,13 +24,15 @@ def new_game():
     room_id = shortuuid.uuid()  
     rooms[room_id] = game.CaptionThisGame(room_id, total_players=TOTAL_PLAYERS, total_games=TOTAL_GAMES, game_duration=DURATION_PER_CAPTION)
 
-def start_timer(room_id, interval):
+def start_timer(room_id, interval, alive):
     '''
         Stop caption submission and proceed to next stage
     '''
     global rooms
 
     for _ in range(interval):
+        if not alive():
+            return
         socketio.sleep(1)
 
     if rooms.get(room_id):
@@ -39,6 +41,18 @@ def start_timer(room_id, interval):
         game.set_flag("vote")
 
         socketio.emit('message', game.to_json(), room=room_id)
+
+def disconnect_all_ingame(room_id):
+    remove_clients = []
+
+    for sid, (_, c_roomId) in connected_clients.items():
+        if c_roomId == room_id:
+            remove_clients.append(sid)
+            disconnect(sid)
+
+    # to avoid dictionary changes size
+    for client in remove_clients:
+        del connected_clients[client]
 
 @app.route("/")
 def index():
@@ -84,19 +98,17 @@ def on_caption(data):
     game.add_caption(player["id"], data["msg"])
     
     if len(game.get_captions()) == 1:
-        # timers[game.get_gameId()] = socketio.start_background_task(start_timer, game.get_gameId(), DURATION_PER_CAPTION)
-
         game.start_timer = True
+        timers[game.get_gameId()] = socketio.start_background_task(start_timer, game.get_gameId(), DURATION_PER_CAPTION, lambda: game.start_timer)
+
 
     if game.all_players_submitted():
-        # cancel timer if existed
-        # if timers[game.get_gameId()].is_alive():
-            # TODO: AttributeError: 'Thread' object has no attribute 'stop'
-            # https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread
-            # https://stackoverflow.com/questions/34923928/stopping-a-thread-once-condition-matches
-            # timers[game.get_gameId()].stop()
-            # del timers[game.get_gameId()]
         rooms[game.get_gameId()].start_timer = False
+
+        # cancel timer if existed
+        if timers[game.get_gameId()].is_alive():
+            timers[game.get_gameId()].join()
+            del timers[game.get_gameId()]
         
         game.set_flag("vote")
     
@@ -123,6 +135,30 @@ def on_new(data):
     game.reset(data["newGame"])
 
     send(game.to_json(), room=player["roomId"])
+
+@socketio.on("disconnect")
+def on_disconnect():
+    global players_ingame, room_id
+
+    player = connected_clients.get(request.sid)
+    
+    if player:
+        game = rooms[player["roomId"]]
+
+        game.remove_player(player["Id"])
+
+        if game.get_gameId() == room_id and game.get_flag() == "wait":
+            players_ingame -= 1
+        else:
+            if not game.is_playable():
+                game.set_flag("quit")
+                send(game.to_json(), room=room_id)
+
+                socketio.sleep(10)
+
+                disconnect_all_ingame(game.get_gameId())
+                del rooms[game.get_gameId()]
+        del connected_clients[request.sid]
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)

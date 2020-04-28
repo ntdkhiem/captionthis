@@ -8,6 +8,12 @@
       section:not(.visible) {
         display: none;
       }
+      .imgContainer {
+        position: relative;
+      }
+      .imgContainer input {
+        position: absolute;
+      }
     </style>
 </head>
 <body>
@@ -112,6 +118,29 @@
     <script type="text/javascript">
         var socket = io.connect("http://" + document.domain + ":" + location.port, {reconnection:false})
         var timer;
+
+        function addTextbox(url, boxes) {
+            const img = $(`.visible img[src="${url}"]`)[0];
+            if (img.clientWidth !== img.parentNode.clientWidth || img.clientHeight !== img.parentNode.clientHeight) {
+              const container = document.createElement("div");
+              container.classList.add("imgContainer");
+              img.parentNode.insertBefore(container, img);
+              img.remove();
+              container.appendChild(img);
+            }
+            const container = img.parentNode;
+            const boxElements = [];
+
+            for (let box of boxes) {
+              const boxEl = document.createElement("input");
+              boxEl.style.setProperty("left", box.x + "px");
+              boxEl.style.setProperty("top", box.y + "px");
+              boxElements.push(boxEl);
+              container.appendChild(boxEl);
+            }
+
+            return boxElements;
+          };
 
         socket.on("connect", function() {
             console.log("Websocket established!")

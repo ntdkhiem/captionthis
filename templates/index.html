@@ -8,18 +8,79 @@
       section:not(.visible) {
         display: none;
       }
-      .imgContainer {
+      #imgLabelContainer {
+        display: grid;
+        grid-template-rows: min-content 1fr;
+        grid-template-columns: 500px 1fr;
+        grid-template-areas: 
+          "img labels"
+          "submit labels";
+      }
+      #imgContainer {
         position: relative;
       }
-      .imgContainer input {
+      img {
+        width: 500px;
+        flex-shrink: 0;
+        grid-area: img;
+      }
+      #imgTextboxMenu {
+        flex-grow: 1;
+        margin: 0 10px;
+        display: flex;
+        flex-direction: column;
+        grid-area: labels;
+      }
+      .imgTextboxContainer {
+        position: relative;
+      }
+      #new {
+        text-align: center;
+        width: 100%;
+      }
+      .imgTextboxContent {
+        display: inline-block;
+        resize: vertical;
+        height: 4em;
+        width: calc(100% - 58px);
+        padding: 5px;
+      }
+      input[type="color"] {
+        display: none;
+      }
+      .color {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        margin: 0 5px;
+        border-radius: 5px;
+        border: 1px solid gray;
+        cursor: pointer;
         position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .label {
+        position: absolute;
+        margin: 1px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        text-align: center;
+        font-size: 20px;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      #imgContainer:hover .label {
+        margin: 0;
+        border: 1px solid gray;
       }
     </style>
 </head>
 <body>
     <h1>Welcome to Caption This Online Game!</h1>
 
-    <section id="join-section" class="visible">
+    <section id="join-section">
       <!-- Will remove later on. -->
       <h4>Login Section</h4>
       <p>This is a section where player will enter their username and login to the game</p>
@@ -44,21 +105,30 @@
 
     <!--<hr>-->
     
-    <section id="caption">
+    <section id="caption" class="visible">
         <!-- Will remove later on. -->
         <h4>Caption Section</h4>
         <p>This is a section where players will be able to give their caption idea based on the picture.</p>
-
-        <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" height="50%" width="500" alt="">
-        <div class="caption">
-            <form id="captionForm">
-                <input type="text" name="caption" id="captionText">
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-        <div class="info">
-            <h4 id="captionSubmissions">0 captions</h4>
-            <h4 id="captionTimer">00:00</h4>
+        <div id="imgLabelContainer">
+          <div id="imgContainer">
+            <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" alt="">
+            <div class="label" style="width: 460px; height: 40px; left: 20px; top: 20px;"></div>
+          </div>
+          <div id="imgTextboxMenu">
+            <div class="imgTextboxContainer">
+              <textarea class="imgTextboxContent" placeholder="Caption"></textarea>
+              <input type="color" id="color-0" class="color-input">
+              <label for="color-0" class="color"></label>
+            </div>
+            <input type="button" id="new" value="+">
+          </div>
+          <div style="grid-area: submit;">
+            <input type="submit" value="submit">
+            <div class="info">
+              <h4 id="captionSubmissions">0 captions</h4>
+              <h4 id="captionTimer">00:00</h4>
+            </div>
+          </div>
         </div>
     </section>
     
@@ -119,29 +189,71 @@
         var socket = io.connect("http://" + document.domain + ":" + location.port, {reconnection:false})
         var timer;
 
-        function addTextbox(url, boxes) {
-            const img = $(`.visible img[src="${url}"]`)[0];
-            if (img.clientWidth !== img.parentNode.clientWidth || img.clientHeight !== img.parentNode.clientHeight) {
-              const container = document.createElement("div");
-              container.classList.add("imgContainer");
-              img.parentNode.insertBefore(container, img);
-              img.remove();
-              container.appendChild(img);
+        const newButton = document.getElementById("new");
+        const labels = [ document.getElementsByClassName("label")[0] ];
+        const labelInputs = [ document.getElementsByClassName("imgTextboxContainer")[0] ];
+        newButton.onclick = () => {
+          const img = document.querySelector(".visible img");
+          addTextbox(img, [
+            {
+              x: 20,
+              y: (img.clientHeight - 20) / 2,
+              width: img.clientWidth - 40,
+              height: 40
             }
-            const container = img.parentNode;
-            const boxElements = [];
+          ])
+        };
+        function initColorInput (color, label) {
+          color.addEventListener("change", function () {
+            this.labels[0].style.setProperty("background-color", this.value);
+            label.style.color = this.value;
+          });
+          color.dispatchEvent(new Event("change"));
+        }
+        function initLabelText (label, textarea) {
+          textarea.addEventListener("input", () => {
+            label.innerText = textarea.value;
+          })
+          label.innerText = textarea.value;
+        }
 
-            for (let box of boxes) {
-              const boxEl = document.createElement("input");
-              boxEl.style.setProperty("left", box.x + "px");
-              boxEl.style.setProperty("top", box.y + "px");
-              boxElements.push(boxEl);
-              container.appendChild(boxEl);
-            }
+        function addTextbox(img, boxes) {
+          //const img = $(`.visible img[src="${url}"]`)[0];
+          const container = img.parentNode;
+          const boxElements = [];
 
-            return boxElements;
-          };
+          for (let box of boxes) {
+            const boxEl = document.createElement("div");
+            boxEl.classList.add("label");
+            boxEl.style.setProperty("left", (box.x || 0) + "px");
+            boxEl.style.setProperty("top", (box.y || 0) + "px");
+            boxEl.style.setProperty("width", (box.width || img.clientWidth) + "px");
+            boxEl.style.setProperty("height", (box.height || img.clientHeight) + "px");
+            boxEl.style.setProperty("transform", `rotate(${box.angle || 0}deg)`);
+            boxEl.style.setProperty("background-color", "transparent");
+            boxEl.style.setProperty("color", "black");
+            boxElements.push(boxEl);
+            labels.push(boxEl);
+            container.appendChild(boxEl);
 
+            const inputs = labelInputs[labelInputs.length - 1].cloneNode(true);
+            const radio = inputs.getElementsByTagName("input")[0];
+            const id = "color-" + labelInputs.length
+            radio.id = id;
+            inputs.getElementsByTagName("label")[0].setAttribute("for", id);
+            labelInputs.push(inputs);
+            initColorInput(radio, boxEl);
+            labelInputs[0].parentNode.insertBefore(inputs, newButton);
+
+            initLabelText(boxEl, inputs.getElementsByTagName("textarea")[0]);
+          }
+
+          return boxElements;
+        };
+        
+        initColorInput(document.getElementsByClassName("color-input")[0], labels[0]);
+        initLabelText(labels[0], labelInputs[0].getElementsByTagName("textarea")[0])
+        
         socket.on("connect", function() {
             console.log("Websocket established!")
         })

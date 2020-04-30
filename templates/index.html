@@ -65,10 +65,6 @@
       .label {
         position: absolute;
         margin: 1px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        align-content: center;
         text-align: center;
         font-size: 20px;
         font-family: Arial, Helvetica, sans-serif;
@@ -80,9 +76,69 @@
         -ms-user-select: none;
         user-select: none;
       }
+      .label-content {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        overflow: hidden;
+      }
       #imgContainer:hover .label {
         margin: 0;
         border: 1px solid gray;
+      }
+      .size-node {
+        width: 5px;
+        height: 5px;
+        background-color: gray;
+        border: 1px solid darkgray; /* weird quirk with css, gray is actually darker than darkgray */
+        position: absolute;
+        transform: translate(-50%, -50%);
+      }
+      #imgContainer:not(:hover) .size-node {
+        display: none;
+      }
+      .tl {
+        top: 0;
+        left: 0;
+        cursor: nwse-resize;
+      }
+      .tc {
+        top: 0;
+        left: 50%;
+        cursor: ns-resize;
+      }
+      .tr {
+        top: 0;
+        left: 100%;
+        cursor: nesw-resize;
+      }
+      .cr {
+        top: 50%;
+        left: 100%;
+        cursor: ew-resize;
+      }
+      .br {
+        top: 100%;
+        left: 100%;
+        cursor: nwse-resize;
+      }
+      .bc {
+        top: 100%;
+        left: 50%;
+        cursor: ns-resize;
+      }
+      .bl {
+        top: 100%;
+        left: 0;
+        cursor: nesw-resize;
+      }
+      .ml {
+        top: 50%;
+        left: 0;
+        cursor: ew-resize;
       }
     </style>
 </head>
@@ -122,7 +178,17 @@
           <div id="imgGridArea">
             <div id="imgContainer">
               <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" alt="">
-              <div class="label" style="width: 460px; height: 40px; left: 20px; top: 20px;"></div>
+              <div class="label" style="width: 460px; height: 40px; left: 20px; top: 20px;">
+                <div class="label-content"></div>
+                <div class="size-node tl"></div>
+                <div class="size-node tc"></div>
+                <div class="size-node tr"></div>
+                <div class="size-node cr"></div>
+                <div class="size-node br"></div>
+                <div class="size-node bc"></div>
+                <div class="size-node bl"></div>
+                <div class="size-node ml"></div>
+              </div>
             </div>
             <div>
               <input type="submit" value="submit">
@@ -206,6 +272,7 @@
         const labelInputs = [ document.getElementsByClassName("imgTextboxContainer")[0] ];
         let mousedown = false;
         let heldLabel;
+        let heldNode;
         let imgXOffset;
         let imgYOffset;
 
@@ -230,32 +297,44 @@
           color.dispatchEvent(new Event("change"));
         }
         function initLabelText (label, textarea) {
-          textarea.addEventListener("input", () => {
-            label.innerText = textarea.value;
+          label.addEventListener("click", () => {
+            textarea.focus();
           })
-          label.innerText = textarea.value;
+          textarea.addEventListener("input", () => {
+            label.getElementsByClassName("label-content")[0].innerText = textarea.value;
+          })
+          label.getElementsByClassName("label-content")[0].innerText = textarea.value;
         }
 
         const onmousedown = event => {
           mousedown = true;
           console.log(event.target);
-          if (event.target.classList.contains("label")) {
+          if (event.target.classList.contains("label")) heldLabel = event.target;
+          else if (event.target.classList.contains("label-content")) heldLabel = event.target.parentNode;
+          else if (event.target.classList.contains("size-node")) {
             heldLabel = event.target;
-            const bcr = heldLabel.getBoundingClientRect();
-            imgXOffset = (event.clientX || event.changedTouches[0].clientX) - bcr.x - scrollX;
-            imgYOffset = (event.clientY || event.changedTouches[0].clientY) - bcr.y - scrollY;
+            return;
           }
+          else return;
+          const bcr = heldLabel.getBoundingClientRect();
+          imgXOffset = (event.clientX || event.changedTouches[0].clientX) - bcr.x - scrollX;
+          imgYOffset = (event.clientY || event.changedTouches[0].clientY) - bcr.y - scrollY;
         }
         const onmouseup = event => {
           mousedown = false;
           heldLabel = undefined;
         }
         const onmousemove = event => {
-          if (heldLabel && mousedown) {
-            const bcr = heldLabel.getBoundingClientRect();
-            const imgBcr = img.getBoundingClientRect();
-            heldLabel.style.setProperty("left", (event.clientX || event.changedTouches[0].clientX) - scrollX - imgBcr.x - imgXOffset + "px");
-            heldLabel.style.setProperty("top", (event.clientY || event.changedTouches[0].clientY) - scrollY - imgBcr.y - imgYOffset + "px");
+          if (mousedown) {
+            if (heldLabel) {
+              const bcr = heldLabel.getBoundingClientRect();
+              const imgBcr = img.getBoundingClientRect();
+              heldLabel.style.setProperty("left", (event.clientX || event.changedTouches[0].clientX) - scrollX - imgBcr.x - imgXOffset + "px");
+              heldLabel.style.setProperty("top", (event.clientY || event.changedTouches[0].clientY) - scrollY - imgBcr.y - imgYOffset + "px");
+            }
+            else if (heldNode) {
+              //if (heldNode.classList.contains("tl")) 
+            }
           }
         }
 
@@ -275,8 +354,7 @@
           const boxElements = [];
 
           for (let box of boxes) {
-            const boxEl = document.createElement("div");
-            boxEl.classList.add("label");
+            const boxEl = labels[labels.length - 1].cloneNode(true);
             boxEl.style.setProperty("left", (box.x || 0) + "px");
             boxEl.style.setProperty("top", (box.y || 0) + "px");
             boxEl.style.setProperty("width", (box.width || img.clientWidth) + "px");

@@ -266,7 +266,7 @@
         window.addEventListener("mouseout", event => {
           if (event.target === document.documentElement) onmouseup();
         });
-        window.addEventListener("touchEnd", onmouseup);
+        window.addEventListener("touchend", onmouseup);
         window.addEventListener("mouseup", onmouseup);
 
         function addTextbox(img, boxes) {
@@ -296,7 +296,7 @@
             labelInputs.push(inputs);
             initColorInput(radio, boxEl);
             labelInputs[0].parentNode.insertBefore(inputs, newButton);
-
+            inputs.getElementsByTagName("textarea")[0].value = "";
             initLabelText(boxEl, inputs.getElementsByTagName("textarea")[0]);
           }
 
@@ -304,7 +304,7 @@
         };
         
         initColorInput(document.getElementsByClassName("color-input")[0], labels[0]);
-        initLabelText(labels[0], labelInputs[0].getElementsByTagName("textarea")[0])
+        initLabelText(labels[0], labelInputs[0].getElementsByTagName("textarea")[0]);
         
         socket.on("connect", function() {
             console.log("Websocket established!")

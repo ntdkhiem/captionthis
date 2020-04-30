@@ -36,10 +36,6 @@
       .imgTextboxContainer {
         position: relative;
       }
-      /*#new {
-        text-align: center;
-        width: 100%;
-      }*/
       .imgTextboxContent {
         display: inline-block;
         resize: vertical;
@@ -108,7 +104,7 @@
       </div>
     </div>
 
-    <section id="join-section">
+    <section id="join-section" class="visible">
       <!-- Will remove later on. -->
       <h4>Login Section</h4>
       <p>This is a section where player will enter their username and login to the game</p>
@@ -119,8 +115,6 @@
       </form>
     </section>
 
-    <!--<hr>-->
-
     <section id="wait">
         <!-- Will remove later on. -->
         <h4>Waiting Section</h4>
@@ -130,18 +124,15 @@
         <!-- option to fill the room with COMs -->
         <button>Fill the room with COM (NOT YET)</button>
     </section>
-
-    <!--<hr>-->
     
-    <section id="caption" class="visible">
+    <section id="caption">
         <!-- Will remove later on. -->
         <h4>Caption Section</h4>
         <p>This is a section where players will be able to give their caption idea based on the picture.</p>
         <div id="imgLabelContainer">
           <div id="imgGridArea">
             <div id="imgContainer">
-              <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" alt="">
-              <!--<div class="label" style="width: 460px; height: 40px; left: 20px; top: 20px;"></div>-->
+              <img src="https://icatcare.org/app/uploads/2018/07/Thinking-of-getting-a-cat.png" alt="" class="captionable">
             </div>
             <div>
               <input type="submit" value="submit">
@@ -151,13 +142,9 @@
               </div>
             </div>
           </div>
-          <div id="imgTextboxMenu">
-            <!--<input type="button" id="new" value="+">-->
-          </div>
+          <div id="imgTextboxMenu"></div>
         </div>
     </section>
-    
-    <!--<hr>-->
     
     <section id="vote">
         <!-- Will remove later on. -->
@@ -173,8 +160,6 @@
         </div>
     </section>
 
-    <!--<hr>-->
-
     <section id="win">
         <!-- Will remove later on. -->
         <h4>Win Section</h4>
@@ -185,8 +170,6 @@
         <h4 id="winners">{player(s)} win!</h4>
     </section>
 
-    <!--<hr>-->
-
     <section id="leaderboard">
         <!-- Will remove later on. -->
         <h4>Leaderboard Section</h4>
@@ -196,8 +179,6 @@
         </div>
         <button onClick="newGame(false)">Next</button>
     </section>
-    
-    <!--<hr>-->
 
     <section id="final">
         <!-- Will remove later on. -->
@@ -214,8 +195,7 @@
         var socket = io.connect("http://" + document.domain + ":" + location.port, {reconnection:false})
         var timer;
 
-        //const newButton = document.getElementById("new");
-        const img = document.querySelector(".visible img");
+        // vars used for dragging and captions
         const labels = [];
         const labelInputs = [];
         let mousedown = false;
@@ -223,20 +203,7 @@
         let imgXOffset;
         let imgYOffset;
 
-        img.onload = () => document.getElementById("imgContainer").style.setProperty("height", img.clientHeight + "px");
-        img.onload();
-
-        /*newButton.onclick = () => {
-          addTextbox(img, [
-            {
-              x: 20,
-              y: (img.clientHeight - 20) / 2,
-              width: img.clientWidth - 40,
-              height: 40
-            }
-          ])
-        };*/
-
+        // Dragging code
         const onmousedown = event => {
           mousedown = true;
           if (event.target.classList.contains("label")) {
@@ -250,25 +217,45 @@
           mousedown = false;
           heldLabel = undefined;
         }
-        const onmousemove = event => {
+        const onmousemove = function(event) {
           if (heldLabel && mousedown) {
             const bcr = heldLabel.getBoundingClientRect();
-            const imgBcr = img.getBoundingClientRect();
+            const imgBcr = this.getBoundingClientRect();
             heldLabel.style.setProperty("left", (event.clientX || event.changedTouches[0].clientX) - scrollX - imgBcr.x - imgXOffset + "px");
             heldLabel.style.setProperty("top", (event.clientY || event.changedTouches[0].clientY) - scrollY - imgBcr.y - imgYOffset + "px");
           }
         }
 
-        img.parentNode.addEventListener("mousedown", onmousedown);
-        img.parentNode.addEventListener("touchstart", onmousedown);
-        img.parentNode.addEventListener("mousemove", onmousemove);
-        img.parentNode.addEventListener("touchmove", onmousemove);
+        for (let img of Array.from(document.getElementsByClassName("captionable"))) {
+          let section = img.parentNode;
+          while (section.tagName !== "SECTION") {
+            section = section.parentNode;
+            if (section.tagName === "BODY") console.warn("Image ", img, " is not inside a <section> element. It is not captionable. ")
+          }
+
+          const observer = new MutationObserver(() => {
+            if (section.classList.contains("visible")) document.getElementById("imgContainer").style.setProperty("height", img.clientHeight + "px");
+          });
+          observer.observe(section, {
+            attributes: true,
+            attributeFilter: [ "class" ],
+            childList: false,
+            characterData: false
+          });
+
+          img.parentNode.addEventListener("mousedown", onmousedown);
+          img.parentNode.addEventListener("touchstart", onmousedown);
+          img.parentNode.addEventListener("mousemove", onmousemove);
+          img.parentNode.addEventListener("touchmove", onmousemove);
+        }
+
         window.addEventListener("mouseout", event => {
           if (event.target === document.documentElement) onmouseup();
         });
         window.addEventListener("touchend", onmouseup);
         window.addEventListener("mouseup", onmouseup);
 
+        // Add a textbox
         function addTextbox(img, boxes = []) {
           if (!(img instanceof HTMLImageElement)) throw new TypeError("Argument 1 of addTextbox must be of type HTMLImageElement, received type " + (img == null ? img : img.constructor.name));
           if (!Array.isArray(boxes)) throw new TypeError("Argument 2 of addTextbox must be of type Array, received type " + (boxes == null ? boxes : boxes.constructor.name));
@@ -326,9 +313,6 @@
           return boxElements;
         };
         
-        /*initColorInput(document.getElementsByClassName("color-input")[0], labels[0]);
-        initLabelText(labels[0], labelInputs[0].getElementsByTagName("textarea")[0]);*/
-        
         socket.on("connect", function() {
             console.log("Websocket established!")
         })
@@ -342,8 +326,6 @@
             }
 
             if (flag == "done") {
-                /*$("#leaderboard").css("background-color", "white")
-                $("#final").css("background-color", "#ffcccc")*/
                 $("#leaderboard").removeClass("visible");
                 $("#final").addClass("visible");
 
@@ -352,8 +334,6 @@
             }
 
             if (flag == "reset") {
-                /*$("#leaderboard").css("background-color", "white")
-                $("#caption").css("background-color", "#ffcccc")*/
                 $("#leaderboard").removeClass("visible");
                 $("#caption").addClass("visible");
                 reset()
@@ -362,14 +342,11 @@
             }
 
             if (flag == "wait") {
-                //$("#wait").css("background-color", "#ffcccc")
                 $("#join-section").removeClass("visible")
                 $("#wait").addClass("visible");
                 $("#waitMsg").text(`Waiting for ${data.game.total_players - Object.keys(data.game.players).length} more players...`)
             }
             else if (flag == "caption") {
-                /*$("#wait").css("background-color", "white")
-                $("#caption").css("background-color", "#ffcccc")*/
                 $("#join-section").removeClass("visible")
                 $("#wait").removeClass("visible");
                 $("#caption").addClass("visible");
@@ -384,8 +361,6 @@
 
             }
             else if (flag == "vote") {
-                /*$("#caption").css("background-color", "white")
-                $("#vote").css("background-color", "#ffcccc")*/
                 $("#caption").removeClass("visible");
                 $("#vote").addClass("visible");
                 
@@ -403,8 +378,6 @@
                 }
             }
             else if (flag == "win") {
-                /*$("#vote").css("background-color", "white")
-                $("#win").css("background-color", "#ffcccc")*/
                 $("#vote").removeClass("visible");
                 $("#win").addClass("visible");
 
@@ -437,8 +410,6 @@
         }
 
         function switchToLeaderboard(players) {
-            /*$("#win").css("background-color", "white")
-            $("#leaderboard").css("background-color", "#ffcccc")*/
             $("#win").removeClass("visible");
             $("#leaderboard").addClass("visible");
 
